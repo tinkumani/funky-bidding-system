@@ -1,0 +1,9 @@
+.bidding-campaigns {
+    margin: 20px;
+}
+
+.campaign {
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin-bottom: 10px;
+}
