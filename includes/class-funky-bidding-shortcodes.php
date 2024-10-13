@@ -246,7 +246,7 @@ class Funky_Bidding_Shortcodes {
                 'is_active' => $is_active,
                 'end_time' => $end_time
             );
-            
+             
             wp_send_json_success($response);
         } else {
             wp_send_json_error('Campaign not found');
