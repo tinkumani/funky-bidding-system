@@ -8,6 +8,7 @@ class Funky_Bidding_Items {
              add_action('admin_menu', array($this, 'add_items_submenu'));
         add_action('admin_post_add_item', array($this, 'handle_add_item'));
         add_action('admin_menu', array($this, 'add_view_items_submenu'));
+        add_action('admin_menu', array($this, 'add_current_items_submenu'));
     }
 
     public function add_items_submenu() {
@@ -205,6 +206,107 @@ class Funky_Bidding_Items {
             $this->display_campaign_items();
         }
 
+        echo '</div>';
+    }
+
+    public function display_current_campaign_items() {
+        if (!isset($_GET['campaign_id'])) {
+            return;
+        }
+
+        $campaign_id = intval($_GET['campaign_id']);
+        global $wpdb;
+
+        $items = $wpdb->get_results($wpdb->prepare(
+            "SELECT * FROM {$wpdb->prefix}bidding_items WHERE campaign_id = %d",
+            $campaign_id
+        ));
+
+        if (empty($items)) {
+            echo '<p>No items found for this campaign.</p>';
+            return;
+        }
+
+        echo '<form method="POST" action="' . esc_url(admin_url('admin-post.php')) . '">';
+        echo '<input type="hidden" name="action" value="delete_items">';
+        echo '<input type="hidden" name="campaign_id" value="' . esc_attr($campaign_id) . '">';
+        echo '<table class="wp-list-table widefat fixed striped">';
+        echo '<thead><tr><th>Select</th><th>Item Name</th><th>Minimum Bid</th><th>Bid Increment</th></tr></thead>';
+        echo '<tbody>';
+
+        foreach ($items as $item) {
+            echo '<tr>';
+            echo '<td><input type="checkbox" name="delete_items[]" value="' . esc_attr($item->id) . '"></td>';
+            echo '<td>' . esc_html($item->item_name) . '</td>';
+            echo '<td>' . esc_html($item->min_bid) . '</td>';
+            echo '<td>' . esc_html($item->bid_increment) . '</td>';
+            echo '</tr>';
+        }
+
+        echo '</tbody></table>';
+        echo '<input type="submit" value="Delete Selected Items" class="button button-primary" onclick="return confirm(\'Are you sure you want to delete the selected items?\');">';
+        echo '</form>';
+    }
+
+    public function handle_delete_items() {
+        if (!isset($_POST['delete_items']) || !isset($_POST['campaign_id'])) {
+            wp_redirect(admin_url('admin.php?page=funky_bidding_view_items&campaign_id=' . $_POST['campaign_id']));
+            exit;
+        }
+
+        global $wpdb;
+        $items_to_delete = array_map('intval', $_POST['delete_items']);
+        $campaign_id = intval($_POST['campaign_id']);
+
+        foreach ($items_to_delete as $item_id) {
+            $wpdb->delete(
+                $wpdb->prefix . 'bidding_items',
+                array('id' => $item_id, 'campaign_id' => $campaign_id),
+                array('%d', '%d')
+            );
+        }
+
+        wp_redirect(admin_url('admin.php?page=funky_bidding_view_items&campaign_id=' . $campaign_id . '&deleted=1'));
+        exit;
+    }
+    public function add_current_items_submenu() {
+        add_submenu_page(
+            'funky_bidding_campaigns',
+            'Current Campaign Items',
+            'Current Items',
+            'manage_options',
+            'funky_bidding_current_items',
+            array($this, 'render_current_items_page')
+        );
+    }
+    
+    // Add this new method
+    public function render_current_items_page() {
+        echo '<div class="wrap">';
+        echo '<h1>Current Campaign Items</h1>';
+    
+        // Campaign selection form
+        echo '<form method="GET" action="">';
+        echo '<input type="hidden" name="page" value="funky_bidding_current_items">';
+        echo '<select name="campaign_id">';
+        echo '<option value="">Select a Campaign</option>';
+    
+        global $wpdb;
+        $campaigns = $wpdb->get_results("SELECT id, name FROM {$wpdb->prefix}bidding_campaigns");
+        foreach ($campaigns as $campaign) {
+            $selected = (isset($_GET['campaign_id']) && $_GET['campaign_id'] == $campaign->id) ? 'selected' : '';
+            echo '<option value="' . esc_attr($campaign->id) . '" ' . $selected . '>' . esc_html($campaign->name) . '</option>';
+        }
+    
+        echo '</select>';
+        echo '<input type="submit" value="View Items" class="button">';
+        echo '</form>';
+    
+        // Display items if a campaign is selected
+        if (isset($_GET['campaign_id'])) {
+            $this->display_current_campaign_items();
+        }
+    
         echo '</div>';
     }
 }

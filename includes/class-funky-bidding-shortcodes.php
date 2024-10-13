@@ -10,6 +10,9 @@ class Funky_Bidding_Shortcodes {
         add_action('init', array($this, 'create_bidding_users_table'));
         add_action('wp_ajax_refresh_campaign_data', array($this, 'refresh_campaign_data'));
         add_action('wp_ajax_nopriv_refresh_campaign_data', array($this, 'refresh_campaign_data'));
+        add_action('admin_post_place_bid', array($this, 'handle_place_bid'));
+        add_action('admin_post_nopriv_place_bid', array($this, 'handle_place_bid'));
+
     }
 
     public function enqueue_styles() {
@@ -17,7 +20,7 @@ class Funky_Bidding_Shortcodes {
     }
 
     // Display all campaigns with modern UI
-    public function display_campaigns($atts) {
+    public function display_campaigns_old($atts) {
         global $wpdb;
         $campaigns = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}bidding_campaigns");
 
@@ -63,6 +66,7 @@ class Funky_Bidding_Shortcodes {
             echo '<p>Minimum Bid: $' . esc_html($item->min_bid) . '</p>';
             echo '<p>Bid Increment: $' . esc_html($item->bid_increment) . '</p>';
             echo '<form method="POST" action="' . esc_url(admin_url('admin-post.php')) . '">';
+            echo '<input type="hidden" name="action" value="place_bid">';
             echo '<input type="hidden" name="item_id" value="' . esc_attr($item->id) . '">';
             echo '<label for="user_email">Email:</label><br>';
             echo '<input type="email" name="user_email" required><br><br>';
@@ -164,7 +168,7 @@ class Funky_Bidding_Shortcodes {
     }
 
     // Create bidding_users table if it doesn't exist
-    private function create_bidding_users_table() {
+    public function create_bidding_users_table() {
         global $wpdb;
         $table_name = $wpdb->prefix . 'bidding_users';
         
@@ -252,4 +256,5 @@ class Funky_Bidding_Shortcodes {
             wp_send_json_error('Campaign not found');
         }
     }
+        
 }
