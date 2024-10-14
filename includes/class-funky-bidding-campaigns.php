@@ -195,60 +195,65 @@ class Funky_Bidding_Campaigns {
                 type: 'POST',
                 data: {
                     action: 'get_campaign_items',
-                    campaign_id: campaignId
+                    campaign_id: campaignId,
+                    nonce: '<?php echo wp_create_nonce('funky_bidding_nonce'); ?>'
                 },
                 success: function(response) {
-                    // Parse the JSON response
-                    var items = JSON.parse(response);
-                    
-                    // Create the modal content
-                    var modalContent = '<h3>Campaign Items</h3>';
-                    modalContent += '<table class="wp-list-table widefat fixed striped">';
-                    modalContent += '<thead><tr><th>Item Name</th><th>Starting Price</th><th>Current Price</th><th>Max Price</th><th>Status</th></tr></thead>';
-                    modalContent += '<tbody>';
-                    
-                    items.forEach(function(item) {
-                        var isSold = (item.current_price >= item.max_bid && item.max_bid != 0) || 
-                                     (new Date(item.campaign_end_date) < new Date() && item.current_price > 0);
-                        modalContent += '<tr>';
-                        modalContent += '<td>' + item.name + '</td>';
-                        modalContent += '<td>$' + parseFloat(item.starting_price).toFixed(2) + '</td>';
-                        modalContent += '<td>$' + parseFloat(item.current_price).toFixed(2) + '</td>';
-                        modalContent += '<td>$' + (item.max_bid != 0 ? parseFloat(item.max_bid).toFixed(2) : 'N/A') + '</td>';
-                        modalContent += '<td>' + (isSold ? 'Sold' : 'Unsold') + '</td>';
-                        modalContent += '</tr>';
-                    });
-                    
-                    modalContent += '</tbody></table>';
-                    
-                    // Display the modal
-                    jQuery('<div id="item-details-modal">')
-                        .html(modalContent)
-                        .dialog({
-                            title: 'Campaign Items',
-                            modal: true,
-                            width: 'auto',
-                            maxWidth: 600,
-                            maxHeight: 400,
-                            close: function() {
-                                jQuery(this).dialog('destroy').remove();
-                            }
+                    if (response.success) {
+                        var items = response.data;
+                        
+                        // Create the modal content
+                        var modalContent = '<h3>Campaign Items</h3>';
+                        modalContent += '<table class="wp-list-table widefat fixed striped">';
+                        modalContent += '<thead><tr><th>Item Name</th><th>Starting Price</th><th>Current Price</th><th>Max Price</th><th>Status</th></tr></thead>';
+                        modalContent += '<tbody>';
+                        
+                        items.forEach(function(item) {
+                            var isSold = (item.current_price >= item.max_bid && item.max_bid != 0) || 
+                                         (new Date(item.campaign_end_date) < new Date() && item.current_price > 0);
+                            modalContent += '<tr>';
+                            modalContent += '<td>' + item.name + '</td>';
+                            modalContent += '<td>$' + parseFloat(item.starting_price).toFixed(2) + '</td>';
+                            modalContent += '<td>$' + parseFloat(item.current_price).toFixed(2) + '</td>';
+                            modalContent += '<td>$' + (item.max_bid != 0 ? parseFloat(item.max_bid).toFixed(2) : 'N/A') + '</td>';
+                            modalContent += '<td>' + (isSold ? 'Sold' : 'Unsold') + '</td>';
+                            modalContent += '</tr>';
                         });
+                        
+                        modalContent += '</tbody></table>';
+                        
+                        // Display the modal
+                        jQuery('<div id="item-details-modal">')
+                            .html(modalContent)
+                            .dialog({
+                                title: 'Campaign Items',
+                                modal: true,
+                                width: 'auto',
+                                maxWidth: 600,
+                                maxHeight: 400,
+                                close: function() {
+                                    jQuery(this).dialog('destroy').remove();
+                                }
+                            });
+                    } else {
+                        console.error('Error fetching campaign items:', response.data);
+                        alert('Error fetching campaign items. Please try again.');
+                    }
                 },
                 error: function(xhr, status, error) {
-                    console.error('Error fetching campaign items:', error);
+                    console.error('AJAX error:', status, error);
                     alert('Error fetching campaign items. Please try again.');
                 }
             });
         }
         </script>
-        <style type="text/css">
-        .active-row { background-color: #e6f3ff; }
-        .inactive-row { background-color: #f0f0f0; }
-        </style>
         <?php
     }
+
     public function get_campaign_items() {
+        // Ensure WordPress is fully loaded
+        require_once(ABSPATH . 'wp-load.php');
+
         check_ajax_referer('funky_bidding_nonce', 'nonce');
 
         $campaign_id = isset($_POST['campaign_id']) ? intval($_POST['campaign_id']) : 0;
@@ -275,6 +280,7 @@ class Funky_Bidding_Campaigns {
 
         wp_send_json_success($items);
     }
+
     public function add_active_campaigns_submenu() {
         add_submenu_page(
             'funky_bidding_campaigns',

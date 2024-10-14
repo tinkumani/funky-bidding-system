@@ -155,6 +155,8 @@ class Funky_Bidding_Shortcodes {
             var $container = $("#funky-bidding-items-container");
             var $itemsContainer = $("#funky-bidding-items");
             var $loader = $("#funky-bidding-loader");
+            var lastScrollTop = 0;
+            var scrollThreshold = 200;
 
             function loadItems() {
                 if (loading) return;
@@ -190,9 +192,14 @@ class Funky_Bidding_Shortcodes {
             }
 
             $container.on("scroll", function() {
-                if ($container.scrollTop() + $container.innerHeight() >= $itemsContainer.height() - 200) {
-                    loadItems();
+                var st = $container.scrollTop();
+                if (st > lastScrollTop) {
+                    // Scrolling down
+                    if ($container.scrollTop() + $container.innerHeight() >= $itemsContainer.height() - scrollThreshold) {
+                        loadItems();
+                    }
                 }
+                lastScrollTop = st;
             });
 
             loadItems();
