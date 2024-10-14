@@ -1,6 +1,4 @@
 <?php
-
-
 class Funky_Bidding_Shortcodes {
     public function __construct() {
         add_shortcode('funky_bidding_campaigns', array($this, 'display_campaigns'));

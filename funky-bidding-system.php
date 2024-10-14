@@ -1,9 +1,9 @@
 <?php
 /**
- * Plugin Name: Funky Bidding System
+ * Plugin Name: Tom Bidding System
  * Description: A full-featured bidding system with campaigns, items, and dynamic bidding.
  * Version: 1.0.0
- * Author: [Your Name]
+ * Author: Tinku Abraham and Lowlyn Jacob
  */
 
 // Exit if accessed directly
