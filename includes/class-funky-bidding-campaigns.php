@@ -203,24 +203,24 @@ class Funky_Bidding_Campaigns {
                         var items = response.data;
                         
                         // Create the modal content
-                        var modalContent = '<h3>Campaign Items</h3>';
+                        var modalContent = '<div style="max-height: 600px; overflow-y: auto;"><h3>Campaign Items</h3>';
                         modalContent += '<table class="wp-list-table widefat fixed striped">';
                         modalContent += '<thead><tr><th>Item Name</th><th>Starting Price</th><th>Current Price</th><th>Max Price</th><th>Status</th></tr></thead>';
                         modalContent += '<tbody>';
                         
                         items.forEach(function(item) {
-                            var isSold = (item.current_price >= item.max_bid && item.max_bid != 0) || 
-                                         (new Date(item.campaign_end_date) < new Date() && item.current_price > 0);
+                            var isSold = (parseFloat(item.current_price) >= parseFloat(item.max_bid) && parseFloat(item.max_bid) !== 0) || 
+                                         (new Date(item.campaign_end_date) < new Date() && parseFloat(item.current_price) > parseFloat(item.starting_price));
                             modalContent += '<tr>';
                             modalContent += '<td>' + item.name + '</td>';
                             modalContent += '<td>$' + parseFloat(item.starting_price).toFixed(2) + '</td>';
                             modalContent += '<td>$' + parseFloat(item.current_price).toFixed(2) + '</td>';
-                            modalContent += '<td>$' + (item.max_bid != 0 ? parseFloat(item.max_bid).toFixed(2) : 'N/A') + '</td>';
+                            modalContent += '<td>$' + (parseFloat(item.max_bid) !== 0 ? parseFloat(item.max_bid).toFixed(2) : 'N/A') + '</td>';
                             modalContent += '<td>' + (isSold ? 'Sold' : 'Unsold') + '</td>';
                             modalContent += '</tr>';
                         });
                         
-                        modalContent += '</tbody></table>';
+                        modalContent += '</tbody></table></div>';
                         
                         // Display the modal
                         jQuery('<div id="item-details-modal">')
@@ -228,9 +228,8 @@ class Funky_Bidding_Campaigns {
                             .dialog({
                                 title: 'Campaign Items',
                                 modal: true,
-                                width: 'auto',
-                                maxWidth: 600,
-                                maxHeight: 400,
+                                width: 600,
+                                position: { my: "center", at: "center", of: window },
                                 close: function() {
                                     jQuery(this).dialog('destroy').remove();
                                 }
