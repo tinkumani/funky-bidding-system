@@ -162,6 +162,10 @@ class Funky_Bidding_Items {
         echo '<label for="item_name">Item Name:</label><br>';
         echo '<input type="text" name="item_name" id="item_name" required><br><br>';
 
+        // Item Description
+        echo '<label for="item_description">Item Description:</label><br>';
+        echo '<textarea name="item_description" id="item_description" rows="4" cols="50" required></textarea><br><br>';
+
         // Item Image Upload
         echo '<label for="item_image">Item Image:</label><br>';
         echo '<input type="file" name="item_image" id="item_image" accept="image/*"><br><br>';
@@ -170,8 +174,8 @@ class Funky_Bidding_Items {
         echo '<label for="min_bid">Minimum Bid:</label><br>';
         echo '<input type="number" name="min_bid" id="min_bid" step="0.01" required><br><br>';
         //Max Bid
-        echo '<label for="max_bid">Maximum Bid:</label><br>';
-        echo '<input type="number" name="max_bid" id="max_bid" step="0.01" required><br><br>';
+        echo '<label for="max_bid">Maximum Bid (optional):</label><br>';
+        echo '<input type="number" name="max_bid" id="max_bid" step="0.01"><br><br>';
         // Bid Increment
         echo '<label for="bid_increment">Bid Increment:</label><br>';
         echo '<input type="number" name="bid_increment" id="bid_increment" step="0.01" required><br><br>';
@@ -185,6 +189,7 @@ class Funky_Bidding_Items {
         if ( isset($_POST['campaign_id'], $_POST['item_name'], $_POST['min_bid'], $_POST['bid_increment']) ) {
             global $wpdb;
             $campaign_id = intval($_POST['campaign_id']);
+            $item_description = sanitize_textarea_field($_POST['item_description']);
             $item_name = sanitize_text_field($_POST['item_name']);
             $min_bid = floatval($_POST['min_bid']);
             $max_bid = floatval($_POST['max_bid']);
@@ -205,6 +210,7 @@ class Funky_Bidding_Items {
                 array(
                     'campaign_id'   => $campaign_id,
                     'item_name'     => $item_name,
+                    'item_description' => $item_description,
                     'item_image'    => $item_image,
                     'min_bid'       => $min_bid,
                     'max_bid'       => $max_bid,

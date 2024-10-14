@@ -295,8 +295,6 @@ class Funky_Bidding_Shortcodes {
         $html_items = array();
         foreach ($items as $item) {
             $highest_bid = $wpdb->get_var($wpdb->prepare("SELECT MAX(bid_amount) FROM {$wpdb->prefix}bidding_bids WHERE item_id = %d", $item->id));
-            $highest_bid = $highest_bid ? $highest_bid : $item->min_bid;
-
             $bid_count = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->prefix}bidding_bids WHERE item_id = %d", $item->id));
 
             $end_time = strtotime($item->end_date);
@@ -310,7 +308,7 @@ class Funky_Bidding_Shortcodes {
             if ($is_sold) {
                 echo '<div class="sold-banner">SOLD</div>';
             }
-            echo '<h2 style="font-size: 0.9em;">' . esc_html($item->item_name) . '</h2>';
+            echo '<h2 style="font-size: 0.9em;">' . esc_html($item->item_name) . ' (ID: ' . esc_html($item->id) . ')</h2>';
             if ($item->item_image) {
                 echo '<div class="item-image-container">';
                 echo '<img src="' . esc_url($item->item_image) . '" alt="Item Image">';
@@ -319,13 +317,15 @@ class Funky_Bidding_Shortcodes {
                 }
                 echo '</div>';
             }
-            echo '<div class="item-details">';
+            echo '<div class="item-details" style="font-size: 0.8em;">';
             echo '<p>' . esc_html(wp_trim_words($item->item_description, 20)) . '</p>';
             echo '</div>';
             echo '<div class="item-stats">';
             echo '<p>Current Highest Bid: $<span class="highest-bid">' . number_format($highest_bid, 2) . '</span></p>';
             echo '<p>Minimum Bid: $' . esc_html($item->min_bid) . '</p>';
-            echo '<p>Max Price: $' . esc_html($item->max_bid) . '</p>';
+            if (!empty($item->max_bid)) {
+                echo '<p>Max Price: $' . esc_html($item->max_bid) . '</p>';
+            }
             echo '<p>Bid Increment: $' . esc_html($item->bid_increment) . '</p>';
             echo '<p>Total Bids: ' . $bid_count . '</p>';
             echo '</div>';
