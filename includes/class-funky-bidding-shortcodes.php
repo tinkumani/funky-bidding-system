@@ -383,24 +383,43 @@ add_action('wp_enqueue_scripts', 'funky_bidding_enqueue_styles');
 // CSS for the bidding system
 function funky_bidding_inline_styles() {
     echo '<style>
-    .funky-bidding-items-container {
-        height: 600px;
-        overflow-y: auto;
+    .funky-bidding-container {
+        display: flex;
+        max-width: 1200px;
+        margin: 0 auto;
         padding: 20px;
+    }
+    .funky-bidding-sidebar {
+        width: 25%;
+        padding-right: 20px;
+    }
+    .funky-bidding-main-content {
+        width: 75%;
+    }
+    .funky-bidding-campaign-list {
+        list-style-type: none;
+        padding: 0;
+    }
+    .funky-bidding-campaign {
+        margin-bottom: 20px;
+        padding: 10px;
         background-color: #f5f5f5;
-        border-radius: 10px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border-radius: 5px;
+    }
+    .funky-bidding-items-container {
+        height: 800px;
+        overflow-y: auto;
     }
     .funky-bidding-items {
-        display: flex;
-        flex-direction: column;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
         gap: 20px;
     }
     .funky-bidding-item {
         background-color: #ffffff;
         border-radius: 8px;
-        padding: 20px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        padding: 15px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         transition: transform 0.2s ease-in-out;
     }
     .funky-bidding-item:hover {
@@ -408,25 +427,29 @@ function funky_bidding_inline_styles() {
     }
     .funky-bidding-item h3 {
         margin-top: 0;
+        font-size: 16px;
         color: #333;
     }
     .item-image-container {
         position: relative;
-        margin-bottom: 15px;
+        margin-bottom: 10px;
     }
     .item-image-container img {
-        max-width: 100%;
+        width: 100%;
         height: auto;
         border-radius: 6px;
+        object-fit: cover;
+        aspect-ratio: 16 / 9;
     }
     .watch-item {
         position: absolute;
-        bottom: 10px;
-        right: 10px;
+        top: 5px;
+        right: 5px;
         background-color: rgba(0, 0, 0, 0.7);
         color: white;
         border: none;
-        padding: 8px 12px;
+        padding: 5px 8px;
+        font-size: 12px;
         border-radius: 4px;
         cursor: pointer;
         transition: background-color 0.2s ease-in-out;
@@ -440,18 +463,18 @@ function funky_bidding_inline_styles() {
     .sold-banner {
         background-color: #ff4136;
         color: white;
-        padding: 5px 10px;
+        padding: 3px 6px;
         position: absolute;
-        top: 10px;
-        right: 10px;
-        transform: rotate(45deg);
+        top: 5px;
+        left: 5px;
+        font-size: 12px;
         font-weight: bold;
     }
     .funky-bidding-button {
         background-color: #0074D9;
         color: white;
         border: none;
-        padding: 10px 15px;
+        padding: 8px 12px;
         border-radius: 4px;
         cursor: pointer;
         transition: background-color 0.2s ease-in-out;
@@ -464,6 +487,22 @@ function funky_bidding_inline_styles() {
         padding: 20px;
         font-style: italic;
         color: #666;
+    }
+    @media (max-width: 768px) {
+        .funky-bidding-container {
+            flex-direction: column;
+        }
+        .funky-bidding-sidebar,
+        .funky-bidding-main-content {
+            width: 100%;
+        }
+        .funky-bidding-items-container {
+            height: auto;
+            max-height: 600px;
+        }
+        .funky-bidding-items {
+            grid-template-columns: 1fr;
+        }
     }
     </style>';
 }
