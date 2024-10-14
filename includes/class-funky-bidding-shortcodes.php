@@ -498,10 +498,21 @@ function funky_bidding_inline_styles() {
         }
         .funky-bidding-items-container {
             height: auto;
-            max-height: 600px;
+            max-height: none;
         }
         .funky-bidding-items {
-            grid-template-columns: 1fr;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        .funky-bidding-item {
+            padding: 10px;
+        }
+        .funky-bidding-item h3 {
+            font-size: 14px;
+        }
+        .watch-item {
+            font-size: 10px;
+            padding: 3px 6px;
         }
     }
     </style>';
