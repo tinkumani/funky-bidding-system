@@ -1,5 +1,6 @@
 <?php
 
+
 class Funky_Bidding_Shortcodes {
     public function __construct() {
         add_shortcode('funky_bidding_campaigns', array($this, 'display_campaigns'));
@@ -296,7 +297,9 @@ class Funky_Bidding_Shortcodes {
             if ($item->item_image) {
                 echo '<div class="item-image-container">';
                 echo '<img src="' . esc_url($item->item_image) . '" alt="Item Image">';
-                echo '<button class="watch-item" data-item-id="' . esc_attr($item->id) . '">Watch Item</button>';
+                if (!$is_sold) {
+                    echo '<button class="watch-item" data-item-id="' . esc_attr($item->id) . '">Watch Item</button>';
+                }
                 echo '</div>';
             }
             echo '<p>Current Highest Bid: $<span class="highest-bid">' . number_format($highest_bid, 2) . '</span></p>';
@@ -463,6 +466,7 @@ function funky_bidding_inline_styles() {
         padding: 15px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         transition: transform 0.2s ease-in-out;
+        position: relative; /* Add this line */
     }
     .funky-bidding-item:hover {
         transform: translateY(-5px);
@@ -505,12 +509,15 @@ function funky_bidding_inline_styles() {
     .sold-banner {
         background-color: #ff4136;
         color: white;
-        padding: 3px 6px;
+        padding: 5px 10px;
         position: absolute;
-        top: 5px;
-        left: 5px;
-        font-size: 12px;
+        top: 10px;
+        left: 10px;
+        font-size: 14px;
         font-weight: bold;
+        z-index: 1;
+        transform: rotate(-15deg);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
     .funky-bidding-button {
         background-color: #0074D9;

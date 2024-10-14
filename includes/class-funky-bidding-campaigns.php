@@ -6,6 +6,8 @@ class Funky_Bidding_Campaigns {
         add_action('admin_menu', array($this, 'add_campaigns_menu'));
         add_action('admin_post_add_campaign', array($this, 'handle_add_campaign'));
         add_action('admin_menu', array($this, 'add_active_campaigns_submenu'));
+        add_action('wp_ajax_get_campaign_items', array($this, 'get_campaign_items'));
+        add_action('wp_ajax_nopriv_get_campaign_items', array($this, 'get_campaign_items'));
     }
 
     // Add admin menu for campaigns
@@ -119,38 +121,62 @@ class Funky_Bidding_Campaigns {
         $current_time = current_time('mysql');
 
         $campaigns = $wpdb->get_results("
-            SELECT c.id, c.name, c.end_date, 
-                   MAX(b.bid_amount) as max_bid, 
-                   COUNT(DISTINCT b.id) as bid_count
+            SELECT c.id, c.name, c.start_date, c.end_date, 
+                   COUNT(DISTINCT i.id) as total_items,
+                   SUM(CASE 
+                       WHEN (b.max_bid_amount >= i.max_bid AND i.max_bid != 0) 
+                            OR (c.end_date < '$current_time' AND b.max_bid_amount > 0) 
+                       THEN 1 
+                       ELSE 0 
+                   END) as items_sold,
+                   SUM(CASE 
+                       WHEN (b.max_bid_amount >= i.max_bid AND i.max_bid != 0) 
+                            OR (c.end_date < '$current_time' AND b.max_bid_amount > 0) 
+                       THEN b.max_bid_amount 
+                       ELSE 0 
+                   END) as funds_collected
             FROM {$wpdb->prefix}bidding_campaigns c
             LEFT JOIN {$wpdb->prefix}bidding_items i ON c.id = i.campaign_id
-            LEFT JOIN {$wpdb->prefix}bidding_bids b ON i.id = b.item_id
-            WHERE c.start_date <= '$current_time' AND c.end_date >= '$current_time'
-            GROUP BY c.id
-            ORDER BY c.end_date ASC
+            LEFT JOIN (
+                SELECT item_id, MAX(bid_amount) as max_bid_amount
+                FROM {$wpdb->prefix}bidding_bids
+                GROUP BY item_id
+            ) b ON i.id = b.item_id
+            GROUP BY c.id, c.name, c.start_date, c.end_date
+            ORDER BY c.end_date DESC
         ");
 
         echo '<div class="wrap">';
-        echo '<h2>Active Campaigns</h2>';
+        echo '<h2>All Campaigns</h2>';
         
         if (empty($campaigns)) {
-            echo '<p>No active campaigns at the moment.</p>';
+            echo '<p>No campaigns found.</p>';
         } else {
             echo '<table class="wp-list-table widefat fixed striped">';
             echo '<thead><tr>';
             echo '<th>Campaign Name</th>';
+            echo '<th>Start Date</th>';
             echo '<th>End Date</th>';
-            echo '<th>Max Bid</th>';
-            echo '<th>Number of Bids</th>';
+            echo '<th>Total Items</th>';
+            echo '<th>Items Sold</th>';
+            echo '<th>Funds Collected</th>';
+            echo '<th>Status</th>';
             echo '</tr></thead>';
             echo '<tbody>';
             
             foreach ($campaigns as $campaign) {
-                echo '<tr>';
+                $is_active = ($campaign->start_date <= $current_time && $campaign->end_date >= $current_time);
+                $row_class = $is_active ? 'active-row' : 'inactive-row';
+                $status = $is_active ? 'Active' : 'Inactive';
+                
+                echo "<tr class='{$row_class}'>";
                 echo '<td>' . esc_html($campaign->name) . '</td>';
+                echo '<td>' . esc_html($campaign->start_date) . '</td>';
                 echo '<td>' . esc_html($campaign->end_date) . '</td>';
-                echo '<td>' . ($campaign->max_bid ? '$' . number_format($campaign->max_bid, 2) : 'No bids yet') . '</td>';
-                echo '<td>' . esc_html($campaign->bid_count) . '</td>';
+                echo '<td>' . esc_html($campaign->total_items) . '</td>';
+                echo '<td><a href="#" onclick="showItemDetails(' . esc_js($campaign->id) . ')">' . esc_html($campaign->items_sold) . '</a></td>';
+                echo '<td>$' . number_format($campaign->funds_collected, 2) . '</td>';
+                echo '<td>' . esc_html($status) . '</td>';
                 echo '</tr>';
             }
             
@@ -158,6 +184,96 @@ class Funky_Bidding_Campaigns {
         }
         
         echo '</div>';
+        
+        // Add JavaScript for item details popup
+        ?>
+        <script type="text/javascript">
+        function showItemDetails(campaignId) {
+            // AJAX call to fetch item details
+            jQuery.ajax({
+                url: ajaxurl,
+                type: 'POST',
+                data: {
+                    action: 'get_campaign_items',
+                    campaign_id: campaignId
+                },
+                success: function(response) {
+                    // Parse the JSON response
+                    var items = JSON.parse(response);
+                    
+                    // Create the modal content
+                    var modalContent = '<h3>Campaign Items</h3>';
+                    modalContent += '<table class="wp-list-table widefat fixed striped">';
+                    modalContent += '<thead><tr><th>Item Name</th><th>Starting Price</th><th>Current Price</th><th>Max Price</th><th>Status</th></tr></thead>';
+                    modalContent += '<tbody>';
+                    
+                    items.forEach(function(item) {
+                        var isSold = (item.current_price >= item.max_bid && item.max_bid != 0) || 
+                                     (new Date(item.campaign_end_date) < new Date() && item.current_price > 0);
+                        modalContent += '<tr>';
+                        modalContent += '<td>' + item.name + '</td>';
+                        modalContent += '<td>$' + parseFloat(item.starting_price).toFixed(2) + '</td>';
+                        modalContent += '<td>$' + parseFloat(item.current_price).toFixed(2) + '</td>';
+                        modalContent += '<td>$' + (item.max_bid != 0 ? parseFloat(item.max_bid).toFixed(2) : 'N/A') + '</td>';
+                        modalContent += '<td>' + (isSold ? 'Sold' : 'Unsold') + '</td>';
+                        modalContent += '</tr>';
+                    });
+                    
+                    modalContent += '</tbody></table>';
+                    
+                    // Display the modal
+                    jQuery('<div id="item-details-modal">')
+                        .html(modalContent)
+                        .dialog({
+                            title: 'Campaign Items',
+                            modal: true,
+                            width: 'auto',
+                            maxWidth: 600,
+                            maxHeight: 400,
+                            close: function() {
+                                jQuery(this).dialog('destroy').remove();
+                            }
+                        });
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error fetching campaign items:', error);
+                    alert('Error fetching campaign items. Please try again.');
+                }
+            });
+        }
+        </script>
+        <style type="text/css">
+        .active-row { background-color: #e6f3ff; }
+        .inactive-row { background-color: #f0f0f0; }
+        </style>
+        <?php
+    }
+    public function get_campaign_items() {
+        check_ajax_referer('funky_bidding_nonce', 'nonce');
+
+        $campaign_id = isset($_POST['campaign_id']) ? intval($_POST['campaign_id']) : 0;
+
+        if (!$campaign_id) {
+            wp_send_json_error('Invalid campaign ID');
+        }
+
+        global $wpdb;
+        $items = $wpdb->get_results($wpdb->prepare(
+            "SELECT i.id, i.item_name as name, i.min_bid as starting_price, i.max_bid, c.end_date as campaign_end_date,
+            COALESCE(MAX(b.bid_amount), i.min_bid) as current_price
+            FROM {$wpdb->prefix}bidding_items i
+            LEFT JOIN {$wpdb->prefix}bidding_bids b ON i.id = b.item_id
+            JOIN {$wpdb->prefix}bidding_campaigns c ON i.campaign_id = c.id
+            WHERE i.campaign_id = %d
+            GROUP BY i.id",
+            $campaign_id
+        ));
+
+        if ($items === false) {
+            wp_send_json_error('Database error: ' . $wpdb->last_error);
+        }
+
+        wp_send_json_success($items);
     }
     public function add_active_campaigns_submenu() {
         add_submenu_page(
