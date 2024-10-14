@@ -49,35 +49,81 @@ class Funky_Bidding_Shortcodes {
     public function display_items($atts) {
         global $wpdb;
         $campaign_id = isset($_GET['campaign_id']) ? intval($_GET['campaign_id']) : 0;
-        $items = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$wpdb->prefix}bidding_items WHERE campaign_id = %d", $campaign_id));
-
+        $items = $wpdb->get_results($wpdb->prepare("SELECT i.*, c.end_date FROM {$wpdb->prefix}bidding_items i JOIN {$wpdb->prefix}bidding_campaigns c ON i.campaign_id = c.id WHERE i.campaign_id = %d", $campaign_id));
+    
         if (empty($items)) {
             return '<p>No items are available for bidding.</p>';
         }
-
+    
         ob_start();
         echo '<div class="bidding-items">';
         foreach ($items as $item) {
+            // Get the current highest bid for this item
+            $highest_bid = $wpdb->get_var($wpdb->prepare("SELECT MAX(bid_amount) FROM {$wpdb->prefix}bidding_bids WHERE item_id = %d", $item->id));
+            $highest_bid = $highest_bid ? $highest_bid : $item->min_bid;
+    
+            $end_time = strtotime($item->end_date);
+            $current_time = current_time('timestamp');
+            $time_left = $end_time - $current_time;
+    
             echo '<div class="item">';
             echo '<h3>' . esc_html($item->item_name) . '</h3>';
             if ($item->item_image) {
                 echo '<img src="' . esc_url($item->item_image) . '" alt="Item Image">';
             }
+            echo '<p>Current Highest Bid: $<span class="highest-bid">' . number_format($highest_bid, 2) . '</span></p>';
             echo '<p>Minimum Bid: $' . esc_html($item->min_bid) . '</p>';
             echo '<p>Bid Increment: $' . esc_html($item->bid_increment) . '</p>';
-            echo '<form method="POST" action="' . esc_url(admin_url('admin-post.php')) . '">';
-            echo '<input type="hidden" name="action" value="place_bid">';
-            echo '<input type="hidden" name="item_id" value="' . esc_attr($item->id) . '">';
-            echo '<label for="user_email">Email:</label><br>';
-            echo '<input type="email" name="user_email" required><br><br>';
-            echo '<label for="bid_amount">Your Bid:</label><br>';
-            echo '<input type="number" name="bid_amount" step="0.01" min="' . esc_attr($item->min_bid + $item->bid_increment) . '" required><br><br>';
-            echo '<input type="submit" value="Place Bid" class="button button-primary">';
-            echo '</form>';
+            
+            // Add timer
+            echo '<p>Time Left: <span class="timer" data-end-time="' . esc_attr($end_time) . '"></span></p>';
+    
+            if ($time_left > 0) {
+                echo '<form method="POST" action="' . esc_url(admin_url('admin-post.php')) . '">';
+                echo '<input type="hidden" name="action" value="place_bid">';
+                echo '<input type="hidden" name="item_id" value="' . esc_attr($item->id) . '">';
+                echo '<label for="user_email">Email:</label><br>';
+                echo '<input type="email" name="user_email" required><br><br>';
+                echo '<label for="bid_amount">Your Bid:</label><br>';
+                echo '<input type="number" name="bid_amount" step="0.01" min="' . esc_attr($highest_bid + $item->bid_increment) . '" required><br><br>';
+                echo '<input type="submit" value="Place Bid" class="button button-primary">';
+                echo '</form>';
+            } else {
+                echo '<p>Bidding has ended for this item.</p>';
+            }
             echo '</div>';
         }
         echo '</div>';
-
+    
+        // Add JavaScript for timer functionality
+        echo '<script>
+        jQuery(document).ready(function($) {
+            function updateTimer() {
+                $(".timer").each(function() {
+                    var endTime = $(this).data("end-time");
+                    var now = Math.floor(Date.now() / 1000);
+                    var timeLeft = endTime - now;
+    
+                    if (timeLeft > 0) {
+                        var days = Math.floor(timeLeft / 86400);
+                        var hours = Math.floor((timeLeft % 86400) / 3600);
+                        var minutes = Math.floor((timeLeft % 3600) / 60);
+                        var seconds = timeLeft % 60;
+    
+                        $(this).text(days + "d " + hours + "h " + minutes + "m " + seconds + "s");
+                    } else {
+                        $(this).text("Bidding ended");
+                        $(this).closest(".item").find("form").remove();
+                        $(this).closest(".item").append("<p>Bidding has ended for this item.</p>");
+                    }
+                });
+            }
+    
+            setInterval(updateTimer, 1000);
+            updateTimer(); // Run once immediately
+        });
+        </script>';
+    
         return ob_get_clean();
     }
 
