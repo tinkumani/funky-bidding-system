@@ -69,6 +69,9 @@ class Funky_Bidding_Shortcodes {
             return '<p class="funky-bidding-message">No campaigns are currently running.</p>';
         }
 
+        // Enqueue the new stylesheet
+        wp_enqueue_style('funky-bidding-campaign-styles', plugin_dir_url(__FILE__) . '../assets/css/funky-bidding-campaign-styles.css');
+
         ob_start();
         echo '<div class="funky-bidding-campaigns">';
         foreach ($campaigns as $campaign) {
@@ -76,21 +79,60 @@ class Funky_Bidding_Shortcodes {
             $is_active = time() < $end_time;
             $class = $is_active ? 'active' : 'inactive';
             
+            // Fetch campaign statistics
+            $total_money = $wpdb->get_var($wpdb->prepare(
+                "SELECT SUM(b.bid_amount) 
+                FROM {$wpdb->prefix}bidding_bids b
+                JOIN {$wpdb->prefix}bidding_items i ON b.item_id = i.id
+                WHERE i.campaign_id = %d",
+                $campaign->id
+            ));
+            $items_sold = $wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(DISTINCT b.item_id) 
+                FROM {$wpdb->prefix}bidding_bids b
+                JOIN {$wpdb->prefix}bidding_items i ON b.item_id = i.id
+                WHERE i.campaign_id = %d",
+                $campaign->id
+            ));
+            $total_items = $wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(*) FROM {$wpdb->prefix}bidding_items WHERE campaign_id = %d",
+                $campaign->id
+            ));
+            $items_to_be_sold = $total_items - $items_sold;
+            
             echo '<div class="funky-bidding-campaign ' . $class . '" data-campaign-id="' . esc_attr($campaign->id) . '">';
+            echo '<div class="funky-bidding-campaign-header">';
             echo '<h2 class="funky-bidding-campaign-title">' . esc_html($campaign->name) . '</h2>';
-            echo '<p class="funky-bidding-campaign-description">' . esc_html($campaign->description) . '</p>';
-            
-            if ($campaign->sponsorship_image) {
-                echo '<img class="funky-bidding-campaign-image" src="' . esc_url($campaign->sponsorship_image) . '" alt="Sponsorship Image">';
-            }
-            
             if ($is_active) {
                 echo '<div class="funky-bidding-timer" data-end-time="' . esc_attr($end_time) . '"></div>';
-                echo '<a href="' . esc_url(get_permalink() . '?campaign_id=' . $campaign->id) . '" class="funky-bidding-button">View Items</a>';
             } else {
                 echo '<div class="funky-bidding-cancelled"><span class="dashicons dashicons-no-alt"></span> Campaign Ended</div>';
             }
+            echo '</div>';
             
+            echo '<div class="funky-bidding-campaign-content">';
+            echo '<div class="funky-bidding-campaign-image-container">';
+            if ($campaign->sponsorship_image) {
+                echo '<img class="funky-bidding-campaign-image" src="' . esc_url($campaign->sponsorship_image) . '" alt="Sponsorship Image">';
+            }
+            echo '</div>';
+            
+            echo '<div class="funky-bidding-campaign-details">';
+            echo '<p class="funky-bidding-campaign-description">' . esc_html($campaign->description) . '</p>';
+            
+            echo '<div class="funky-bidding-campaign-stats">';
+            echo '<div class="funky-bidding-stat"><span class="funky-bidding-stat-label">Total Raised:</span> <span class="funky-bidding-stat-value">$' . number_format($total_money, 2) . '</span></div>';
+            echo '<div class="funky-bidding-stat"><span class="funky-bidding-stat-label">Items Sold:</span> <span class="funky-bidding-stat-value">' . $items_sold . '</span></div>';
+            echo '<div class="funky-bidding-stat"><span class="funky-bidding-stat-label">Items Remaining:</span> <span class="funky-bidding-stat-value">' . $items_to_be_sold . '</span></div>';
+            echo '<div class="funky-bidding-stat"><span class="funky-bidding-stat-label">Start Date:</span> <span class="funky-bidding-stat-value">' . esc_html($campaign->start_date) . '</span></div>';
+            echo '<div class="funky-bidding-stat"><span class="funky-bidding-stat-label">End Date:</span> <span class="funky-bidding-stat-value">' . esc_html($campaign->end_date) . '</span></div>';
+            echo '</div>';
+            
+            if ($is_active) {
+                echo '<a href="' . esc_url(get_permalink() . '?campaign_id=' . $campaign->id) . '" class="funky-bidding-button">View Items</a>';
+            }
+            echo '</div>';
+            echo '</div>';
             echo '</div>';
         }
         echo '</div>';
@@ -243,7 +285,7 @@ class Funky_Bidding_Shortcodes {
             $current_time = current_time('timestamp');
             $time_left = $end_time - $current_time;
 
-            $is_sold = ($highest_bid >= $item->max_price && $item->max_price != 0) || ($time_left <= 0);
+            $is_sold = ($highest_bid >= $item->max_bid && $item->max_bid != 0) || ($time_left <= 0);
 
             ob_start();
             echo '<div class="funky-bidding-item' . ($is_sold ? ' sold' : '') . '">';
@@ -491,6 +533,7 @@ function funky_bidding_inline_styles() {
     @media (max-width: 768px) {
         .funky-bidding-container {
             flex-direction: column;
+            padding: 10px;
         }
         .funky-bidding-sidebar,
         .funky-bidding-main-content {
@@ -505,14 +548,34 @@ function funky_bidding_inline_styles() {
             gap: 10px;
         }
         .funky-bidding-item {
-            padding: 10px;
+            padding: 8px;
         }
         .funky-bidding-item h3 {
             font-size: 14px;
+            margin-bottom: 5px;
+        }
+        .item-image-container {
+            margin-bottom: 5px;
+        }
+        .item-image-container img {
+            aspect-ratio: 1 / 1;
         }
         .watch-item {
             font-size: 10px;
-            padding: 3px 6px;
+            padding: 2px 4px;
+        }
+        .funky-bidding-item p {
+            font-size: 12px;
+            margin: 3px 0;
+        }
+        .funky-bidding-button {
+            padding: 5px 8px;
+            font-size: 12px;
+        }
+        .bid-form input[type="email"],
+        .bid-form input[type="number"] {
+            width: 100%;
+            margin-bottom: 5px;
         }
     }
     </style>';

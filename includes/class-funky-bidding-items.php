@@ -5,11 +5,13 @@ class Funky_Bidding_Items {
     public function __construct() {
         add_action('admin_menu', array($this, 'add_items_submenu'));
         add_action('admin_post_add_item', array($this, 'handle_add_item'));
-             add_action('admin_menu', array($this, 'add_items_submenu'));
+        add_action('admin_menu', array($this, 'add_items_submenu'));
         add_action('admin_post_add_item', array($this, 'handle_add_item'));
         add_action('admin_menu', array($this, 'add_view_items_submenu'));
         add_action('admin_menu', array($this, 'add_current_items_submenu'));
         add_action('admin_post_delete_items', array($this, 'handle_delete_items'));
+        add_action('admin_menu', array($this, 'add_edit_campaign_submenu'));
+        add_action('admin_post_edit_campaign', array($this, 'handle_edit_campaign'));
     }
 
     public function add_items_submenu() {
@@ -19,8 +21,123 @@ class Funky_Bidding_Items {
             'Add Items', 
             'manage_options', 
             'funky_bidding_add_items', 
-            array($this, 'render_add_items_page')
+            array($this, 'render_add_items_page'),
+            'funky_bidding_edit_campaign',
+            array($this, 'render_edit_campaign_page')
         );
+    }
+    public function add_edit_campaign_submenu(): void {
+        add_submenu_page(
+            'funky_bidding_campaigns',
+            'Edit Campaign',
+            'Edit Campaign',
+            'manage_options',
+            'funky_bidding_edit_campaign',
+            array($this, 'render_edit_campaign_page')
+        );
+    }
+
+    public function render_edit_campaign_page() {
+        global $wpdb;
+        
+        echo '<div class="wrap">';
+        echo '<h1>Edit Campaign</h1>';
+    
+        // Campaign selection form
+        echo '<form method="GET" action="">';
+        echo '<input type="hidden" name="page" value="funky_bidding_edit_campaign">';
+        echo '<select name="campaign_id">';
+        echo '<option value="">Select a Campaign</option>';
+    
+        $campaigns = $wpdb->get_results("SELECT id, name FROM {$wpdb->prefix}bidding_campaigns");
+        foreach ($campaigns as $campaign) {
+            $selected = (isset($_GET['campaign_id']) && $_GET['campaign_id'] == $campaign->id) ? 'selected' : '';
+            echo '<option value="' . esc_attr($campaign->id) . '" ' . $selected . '>' . esc_html($campaign->name) . '</option>';
+        }
+    
+        echo '</select>';
+        echo '<input type="submit" value="Edit Campaign" class="button">';
+        echo '</form>';
+    
+        // If a campaign is selected, show the edit form
+        if (isset($_GET['campaign_id'])) {
+            $campaign_id = intval($_GET['campaign_id']);
+            $campaign = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}bidding_campaigns WHERE id = %d", $campaign_id));
+    
+            if (!$campaign) {
+                echo '<p>Campaign not found.</p>';
+                return;
+            }
+    
+            echo '<form method="POST" action="' . esc_url(admin_url('admin-post.php')) . '" enctype="multipart/form-data">';
+            echo '<input type="hidden" name="action" value="edit_campaign">';
+            echo '<input type="hidden" name="campaign_id" value="' . esc_attr($campaign_id) . '">';
+    
+            // Campaign Name
+            echo '<label for="campaign_name">Campaign Name:</label><br>';
+            echo '<input type="text" name="campaign_name" id="campaign_name" value="' . esc_attr($campaign->name) . '" required><br><br>';
+    
+            // Campaign Description
+            echo '<label for="campaign_description">Campaign Description:</label><br>';
+            echo '<textarea name="campaign_description" id="campaign_description" rows="4" cols="50">' . esc_textarea($campaign->description) . '</textarea><br><br>';
+    
+            // Start Date
+            echo '<label for="start_date">Start Date:</label><br>';
+            echo '<input type="datetime-local" name="start_date" id="start_date" value="' . esc_attr(date('Y-m-d\TH:i', strtotime($campaign->start_date))) . '" required><br><br>';
+    
+            // End Date
+            echo '<label for="end_date">End Date:</label><br>';
+            echo '<input type="datetime-local" name="end_date" id="end_date" value="' . esc_attr(date('Y-m-d\TH:i', strtotime($campaign->end_date))) . '" required><br><br>';
+    
+            // Sponsorship Image
+            echo '<label for="sponsorship_image">Sponsorship Image:</label><br>';
+            if ($campaign->sponsorship_image) {
+                echo '<img src="' . esc_url($campaign->sponsorship_image) . '" alt="Current Sponsorship Image" style="max-width: 200px;"><br>';
+            }
+            echo '<input type="file" name="sponsorship_image" id="sponsorship_image" accept="image/*"><br><br>';
+    
+            echo '<input type="submit" value="Update Campaign" class="button button-primary">';
+            echo '</form>';
+        }
+    
+        echo '</div>';
+    }
+
+    public function handle_edit_campaign() {
+        if (!isset($_POST['campaign_id']) || !current_user_can('manage_options')) {
+            wp_die('Unauthorized access');
+        }
+
+        $campaign_id = intval($_POST['campaign_id']);
+        $campaign_name = sanitize_text_field($_POST['campaign_name']);
+        $campaign_description = sanitize_textarea_field($_POST['campaign_description']);
+        $start_date = sanitize_text_field($_POST['start_date']);
+        $end_date = sanitize_text_field($_POST['end_date']);
+
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'bidding_campaigns';
+
+        $data = array(
+            'name' => $campaign_name,
+            'description' => $campaign_description,
+            'start_date' => $start_date,
+            'end_date' => $end_date,
+        );
+
+        $format = array('%s', '%s', '%s', '%s');
+
+        if (!empty($_FILES['sponsorship_image']['tmp_name'])) {
+            $upload = wp_handle_upload($_FILES['sponsorship_image'], array('test_form' => false));
+            if (isset($upload['url'])) {
+                $data['sponsorship_image'] = $upload['url'];
+                $format[] = '%s';
+            }
+        }
+
+        $wpdb->update($table_name, $data, array('id' => $campaign_id), $format, array('%d'));
+
+        wp_redirect(admin_url('admin.php?page=funky_bidding_campaigns&updated=true'));
+        exit;
     }
 
     public function render_add_items_page() {
@@ -52,7 +169,9 @@ class Funky_Bidding_Items {
         // Minimum Bid
         echo '<label for="min_bid">Minimum Bid:</label><br>';
         echo '<input type="number" name="min_bid" id="min_bid" step="0.01" required><br><br>';
-
+        //Max Bid
+        echo '<label for="max_bid">Maximum Bid:</label><br>';
+        echo '<input type="number" name="max_bid" id="max_bid" step="0.01" required><br><br>';
         // Bid Increment
         echo '<label for="bid_increment">Bid Increment:</label><br>';
         echo '<input type="number" name="bid_increment" id="bid_increment" step="0.01" required><br><br>';
@@ -68,6 +187,7 @@ class Funky_Bidding_Items {
             $campaign_id = intval($_POST['campaign_id']);
             $item_name = sanitize_text_field($_POST['item_name']);
             $min_bid = floatval($_POST['min_bid']);
+            $max_bid = floatval($_POST['max_bid']);
             $bid_increment = floatval($_POST['bid_increment']);
             
             // Handle the image upload if it exists
@@ -87,6 +207,7 @@ class Funky_Bidding_Items {
                     'item_name'     => $item_name,
                     'item_image'    => $item_image,
                     'min_bid'       => $min_bid,
+                    'max_bid'       => $max_bid,
                     'bid_increment' => $bid_increment
                 )
             );
@@ -133,6 +254,7 @@ class Funky_Bidding_Items {
         echo '<th>Image</th>';
         echo '<th>Item Name</th>';
         echo '<th>Original Bid Price</th>';
+        echo '<th>Maximum Bid Price</th>';
         echo '<th>Current Price</th>';
         echo '<th>Number of Bids</th>';
         echo '<th>Highest Bidder Email</th>';
@@ -151,6 +273,7 @@ class Funky_Bidding_Items {
             ) . '</td>';
             echo '<td>' . esc_html($item->item_name) . '</td>';
             echo '<td>$' . number_format($item->min_bid, 2) . '</td>';
+            echo '<td>$' . number_format($item->max_bid, 2) . '</td>';
             echo '<td>$' . number_format($item->current_price ? $item->current_price : $item->min_bid, 2) . '</td>';
             echo '<td>' . intval($item->bid_count) . '</td>';
             echo '<td>' . esc_html($item->user_email ? $item->user_email : 'N/A') . '</td>';
