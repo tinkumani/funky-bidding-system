@@ -9,6 +9,7 @@ class Funky_Bidding_Items {
         add_action('admin_post_add_item', array($this, 'handle_add_item'));
         add_action('admin_menu', array($this, 'add_view_items_submenu'));
         add_action('admin_menu', array($this, 'add_current_items_submenu'));
+        add_action('admin_post_delete_items', array($this, 'handle_delete_items'));
     }
 
     public function add_items_submenu() {
