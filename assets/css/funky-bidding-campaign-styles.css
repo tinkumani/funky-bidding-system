@@ -1,0 +1,144 @@
+.funky-bidding-campaigns {
+    font-family: Arial, sans-serif;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.funky-bidding-campaign {
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    margin-bottom: 30px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: box-shadow 0.3s ease;
+}
+
+.funky-bidding-campaign:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.funky-bidding-campaign-header {
+    background-color: #f8f8f8;
+    padding: 15px 20px;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.funky-bidding-campaign-title {
+    font-size: 24px;
+    color: #333;
+    margin: 0;
+}
+
+.funky-bidding-timer {
+    font-size: 18px;
+    color: #e74c3c;
+    font-weight: bold;
+}
+
+.funky-bidding-cancelled {
+    color: #e74c3c;
+    font-weight: bold;
+}
+
+.funky-bidding-campaign-content {
+    display: flex;
+    padding: 20px;
+}
+
+.funky-bidding-campaign-image-container {
+    flex: 0 0 300px;
+    margin-right: 20px;
+}
+
+.funky-bidding-campaign-image {
+    width: 100%;
+    height: auto;
+    border-radius: 4px;
+}
+
+.funky-bidding-campaign-details {
+    flex: 1;
+}
+
+.funky-bidding-campaign-description {
+    font-size: 16px;
+    color: #555;
+    line-height: 1.6;
+    margin-bottom: 20px;
+}
+
+.funky-bidding-campaign-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.funky-bidding-stat {
+    background-color: #f8f8f8;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+.funky-bidding-stat-label {
+    font-size: 14px;
+    color: #777;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.funky-bidding-stat-value {
+    font-size: 18px;
+    color: #333;
+    font-weight: bold;
+}
+
+.funky-bidding-button {
+    display: inline-block;
+    background-color: #3498db;
+    color: #ffffff;
+    padding: 10px 20px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+}
+
+.funky-bidding-button:hover {
+    background-color: #2980b9;
+}
+
+.funky-bidding-campaign.inactive {
+    opacity: 0.7;
+}
+
+.funky-bidding-campaign.inactive .funky-bidding-button {
+    background-color: #95a5a6;
+    cursor: not-allowed;
+}
+
+.funky-bidding-campaign.inactive .funky-bidding-button:hover {
+    background-color: #7f8c8d;
+}
+
+@media (max-width: 768px) {
+    .funky-bidding-campaign-content {
+        flex-direction: column;
+    }
+
+    .funky-bidding-campaign-image-container {
+        flex: 0 0 auto;
+        margin-right: 0;
+        margin-bottom: 20px;
+    }
+
+    .funky-bidding-campaign-stats {
+        grid-template-columns: 1fr;
+    }
+}
