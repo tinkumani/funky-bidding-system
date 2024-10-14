@@ -128,7 +128,19 @@ class Funky_Bidding_Shortcodes {
             echo '</div>';
             
             if ($is_active) {
-                echo '<a href="' . esc_url(get_permalink() . '?campaign_id=' . $campaign->id) . '" class="funky-bidding-button">View Items</a>';
+                $view_items_url = esc_url(get_permalink() . '?campaign_id=' . $campaign->id);
+                echo '<a href="' . $view_items_url . '" class="funky-bidding-button" id="view-items-' . esc_attr($campaign->id) . '">View Items</a>';
+                
+                // Add JavaScript to auto-click the first active campaign's "View Items" button
+                static $first_active_campaign = true;
+                if ($first_active_campaign) {
+                    echo '<script>
+                    setTimeout(function() {
+                        document.getElementById("view-items-' . esc_js($campaign->id) . '").click();
+                    }, 100);
+                    </script>';
+                    $first_active_campaign = false;
+                }
             }
             echo '</div>';
             echo '</div>';
@@ -298,7 +310,7 @@ class Funky_Bidding_Shortcodes {
             if ($is_sold) {
                 echo '<div class="sold-banner">SOLD</div>';
             }
-            echo '<h3>' . esc_html($item->item_name) . '</h3>';
+            echo '<h2 style="font-size: 0.9em;">' . esc_html($item->item_name) . '</h2>';
             if ($item->item_image) {
                 echo '<div class="item-image-container">';
                 echo '<img src="' . esc_url($item->item_image) . '" alt="Item Image">';
@@ -307,12 +319,16 @@ class Funky_Bidding_Shortcodes {
                 }
                 echo '</div>';
             }
+            echo '<div class="item-details">';
+            echo '<p>' . esc_html(wp_trim_words($item->item_description, 20)) . '</p>';
+            echo '</div>';
+            echo '<div class="item-stats">';
             echo '<p>Current Highest Bid: $<span class="highest-bid">' . number_format($highest_bid, 2) . '</span></p>';
             echo '<p>Minimum Bid: $' . esc_html($item->min_bid) . '</p>';
             echo '<p>Max Price: $' . esc_html($item->max_bid) . '</p>';
             echo '<p>Bid Increment: $' . esc_html($item->bid_increment) . '</p>';
             echo '<p>Total Bids: ' . $bid_count . '</p>';
-            
+            echo '</div>';
             if (!$is_sold) {
                 echo '<p>Time Left: <span class="timer" data-end-time="' . esc_attr($end_time) . '"></span></p>';
                 echo '<form method="POST" action="' . esc_url(admin_url('admin-post.php')) . '">';
