@@ -101,13 +101,13 @@ class Funky_Bidding_Shortcodes {
             ));
             $items_to_be_sold = $total_items - $items_sold;
             
-            echo '<div class="funky-bidding-campaign ' . $class . '" data-campaign-id="' . esc_attr($campaign->id) . '">';
+            echo '<div class="funky-bidding-campaign ' . $class . '" data-campaign-id="' . esc_attr($campaign->id) . '" style="font-family: \'Brush Script MT\', cursive; color: orange;">';
             echo '<div class="funky-bidding-campaign-header">';
-            echo '<h2 class="funky-bidding-campaign-title">' . esc_html($campaign->name) . '</h2>';
+            echo '<h2 class="funky-bidding-campaign-title" style="font-family: \'Brush Script MT\', cursive; color: orange;">' . esc_html($campaign->name) . '</h2>';
             if ($is_active) {
-                echo '<div class="funky-bidding-timer" data-end-time="' . esc_attr($end_time) . '"></div>';
+                echo '<div class="funky-bidding-timer" data-end-time="' . esc_attr($end_time) . '" style="font-family: \'Brush Script MT\', cursive; color: orange;"></div>';
             } else {
-                echo '<div class="funky-bidding-cancelled"><span class="dashicons dashicons-no-alt"></span> Campaign Ended</div>';
+                echo '<div class="funky-bidding-cancelled" style="font-family: \'Brush Script MT\', cursive; color: orange;"><span class="dashicons dashicons-no-alt"></span> Campaign Ended</div>';
             }
             echo '</div>';
             
@@ -121,7 +121,7 @@ class Funky_Bidding_Shortcodes {
             echo '<div class="funky-bidding-campaign-details">';
             echo '<p class="funky-bidding-campaign-description">' . esc_html($campaign->description) . '</p>';
             
-            echo '<div class="funky-bidding-campaign-stats">';
+            echo '<div class="funky-bidding-campaign-stats" style="font-family: \'Georgia\', serif; color: #8B4513;">';
             echo '<div class="funky-bidding-stat"><span class="funky-bidding-stat-label">Total Raised:</span> <span class="funky-bidding-stat-value">$' . number_format($total_money, 2) . '</span></div>';
             echo '<div class="funky-bidding-stat"><span class="funky-bidding-stat-label">Items Sold:</span> <span class="funky-bidding-stat-value">' . $items_sold . '</span></div>';
             echo '<div class="funky-bidding-stat"><span class="funky-bidding-stat-label">Items Remaining:</span> <span class="funky-bidding-stat-value">' . $items_to_be_sold . '</span></div>';
@@ -345,9 +345,10 @@ class Funky_Bidding_Shortcodes {
                 
                 if ($user_info) {
                     echo '<div class="stored-user-info">';
-                    echo '<p>Bidding as: ' . esc_html($user_info['name']) . '</p>';
+                    echo '<p>Temporary Login: ' . esc_html($user_info['name']) . '</p>';
                     echo '<p>' . esc_html($user_info['email'] ? 'Email: ' . $user_info['email'] : 'Phone: ' . $user_info['phone']) . '</p>';
                     echo '<button type="button" class="clear-user-info">Change User Info</button>';
+                    echo '<p class="user-info-disclaimer" style="font-size: 0.8em; color: #666;">(Your information is not shared with other users.)</p>';
                     echo '</div>';
                     echo '<div class="user-info-fields" style="display:none;">';
                 } else {
@@ -359,7 +360,7 @@ class Funky_Bidding_Shortcodes {
                 echo '<label for="user_email">Email:</label>';
                 echo '<input type="email" name="user_email" id="user_email" value="' . esc_attr($user_info['email'] ?? '') . '">';
                 echo '<label for="user_phone">Phone:</label>';
-                echo '<input type="text" name="user_phone" id="user_phone" value="' . esc_attr($user_info['phone'] ?? '') . '">';
+                echo '<input type="tel" name="user_phone" id="user_phone" value="' . esc_attr($user_info['phone'] ?? '') . '" pattern="[0-9]{10}">';
                 echo '<p class="field-note">Either Email or Phone is required</p>';
                 echo '</div>';
                 
@@ -376,8 +377,26 @@ class Funky_Bidding_Shortcodes {
                             document.cookie = "funky_bidding_user_info=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
                         });
                         
-                        $(".bidding-form").on("submit", function() {
-                        return true;
+                        $(".bidding-form").on("submit", function(e) {
+                            var email = $("#user_email").val();
+                            var phone = $("#user_phone").val();
+                            if (!email && !phone) {
+                                alert("Please provide either an email or a phone number.");
+                                e.preventDefault();
+                                return false;
+                            }
+                            if (phone && !/^[0-9]{10}$/.test(phone)) {
+                                alert("Please enter a valid 10-digit phone number.");
+                                e.preventDefault();
+                                return false;
+                            }
+                            var userInfo = {
+                                name: $("#user_name").val(),
+                                email: email,
+                                phone: phone
+                            };
+                            document.cookie = "funky_bidding_user_info=" + JSON.stringify(userInfo) + "; path=/; max-age=2592000; SameSite=Strict";
+                            return true;
                         });
                     });
                 </script>';
