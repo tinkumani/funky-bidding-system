@@ -25,6 +25,7 @@ class Funky_Bidding_Activation {
             id INT(11) NOT NULL AUTO_INCREMENT,
             campaign_id INT(11) NOT NULL,
             item_name VARCHAR(255) NOT NULL,
+            item_id INT(11)  NULL,
             item_description TEXT,
             item_image VARCHAR(255),
             min_bid DECIMAL(10,2) NOT NULL,

@@ -157,6 +157,9 @@ class Funky_Bidding_Items {
             echo '<option value="' . esc_attr($campaign->id) . '">' . esc_html($campaign->name) . '</option>';
         }
         echo '</select><br><br>';
+        // Item Id
+        echo '<label for="item_id">Item Id (optional):</label><br>';
+        echo '<input type="text" name="item_id" id="item_id"><br><br>';
 
         // Item Name
         echo '<label for="item_name">Item Name:</label><br>';
@@ -189,6 +192,7 @@ class Funky_Bidding_Items {
         if ( isset($_POST['campaign_id'], $_POST['item_name'], $_POST['min_bid'], $_POST['bid_increment']) ) {
             global $wpdb;
             $campaign_id = intval($_POST['campaign_id']);
+            $item_id = intval($_POST['item_id']);
             $item_description = sanitize_textarea_field($_POST['item_description']);
             $item_name = sanitize_text_field($_POST['item_name']);
             $min_bid = floatval($_POST['min_bid']);
@@ -209,6 +213,7 @@ class Funky_Bidding_Items {
                 "{$wpdb->prefix}bidding_items",
                 array(
                     'campaign_id'   => $campaign_id,
+                    'item_id'       => $item_id,
                     'item_name'     => $item_name,
                     'item_description' => $item_description,
                     'item_image'    => $item_image,

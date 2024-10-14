@@ -308,7 +308,11 @@ class Funky_Bidding_Shortcodes {
             if ($is_sold) {
                 echo '<div class="sold-banner">SOLD</div>';
             }
-            echo '<h2 style="font-size: 0.9em;">' . esc_html($item->item_name) . ' (ID: ' . esc_html($item->id) . ')</h2>';
+            echo '<h2 style="font-size: 0.9em;">' . esc_html($item->item_name);
+            if (!empty($item->item_id)) {
+                echo ' (ID: ' . esc_html($item->item_id) . ')';
+            }
+            echo '</h2>';
             if ($item->item_image) {
                 echo '<div class="item-image-container">';
                 echo '<img src="' . esc_url($item->item_image) . '" alt="Item Image">';
