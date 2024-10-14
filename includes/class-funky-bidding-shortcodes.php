@@ -377,10 +377,7 @@ class Funky_Bidding_Shortcodes {
                         });
                         
                         $(".bidding-form").on("submit", function() {
-                            if ($("#user_email").val() === "" && $("#user_phone").val() === "") {
-                                alert("Please provide either an email or a phone number."+$("#user_email").val()+" "+$("#user_phone").val());
-                                return false;
-                            }
+                        return true;
                         });
                     });
                 </script>';
