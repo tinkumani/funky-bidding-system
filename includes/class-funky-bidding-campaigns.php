@@ -110,6 +110,32 @@ class Funky_Bidding_Campaigns {
                 )
             );
 
+            $campaign_id = $wpdb->insert_id;
+
+            // Log campaign activity
+            $browser = $_SERVER['HTTP_USER_AGENT'];
+            $ip_address = $_SERVER['REMOTE_ADDR'];
+            $time = current_time('mysql');
+            
+            // Get location (you may want to use a geolocation service here)
+            $location = 'Unknown';
+
+            $wpdb->insert(
+                "{$wpdb->prefix}admin_campaign_activity",
+                array(
+                    'campaign_id' => $campaign_id,
+                    'campaign_name' => $campaign_name,
+                    'description' => $description,
+                    'start_date' => $start_date,
+                    'end_date' => $end_date,
+                    'sponsorship_image' => $sponsorship_image,
+                    'browser' => $browser,
+                    'ip_address' => $ip_address,
+                    'location' => $location,
+                    'time' => $time
+                )
+            );
+
             wp_redirect(admin_url('admin.php?page=funky_bidding_campaigns'));
             exit;
         }

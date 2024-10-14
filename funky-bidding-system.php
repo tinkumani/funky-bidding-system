@@ -3,7 +3,7 @@
  * Plugin Name: Tom Bidding System
  * Description: A full-featured bidding system with campaigns, items, and dynamic bidding.
  * Version: 1.0.0
- * Author: Tinku Abraham and Lowlyn Jacob
+ * Author: Tinku Abraham and Lowlyn Jaco
  */
 
 // Exit if accessed directly

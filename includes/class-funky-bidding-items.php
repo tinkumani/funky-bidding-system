@@ -193,7 +193,7 @@ class Funky_Bidding_Items {
             global $wpdb;
             $campaign_id = intval($_POST['campaign_id']);
             $item_id = intval($_POST['item_id']);
-            $item_description = sanitize_textarea_field($_POST['item_description']);
+            $item_description = wp_kses_post($_POST['item_description']); // Allow HTML including links
             $item_name = sanitize_text_field($_POST['item_name']);
             $min_bid = floatval($_POST['min_bid']);
             $max_bid = floatval($_POST['max_bid']);
@@ -223,6 +223,34 @@ class Funky_Bidding_Items {
                 )
             );
 
+            $new_item_id = $wpdb->insert_id;
+
+            // Log item activity
+            $browser = $_SERVER['HTTP_USER_AGENT'];
+            $ip_address = $_SERVER['REMOTE_ADDR'];
+            $time = current_time('mysql');
+            
+            // Get location (you may want to use a geolocation service here)
+            $location = 'Unknown';
+
+            $wpdb->insert(
+                "{$wpdb->prefix}admin_item_activity",
+                array(
+                    'item_id' => $new_item_id,
+                    'campaign_id' => $campaign_id,
+                    'item_name' => $item_name,
+                    'item_description' => $item_description,
+                    'item_image' => $item_image,
+                    'min_bid' => $min_bid,
+                    'max_bid' => $max_bid,
+                    'bid_increment' => $bid_increment,
+                    'browser' => $browser,
+                    'ip_address' => $ip_address,
+                    'location' => $location,
+                    'time' => $time
+                )
+            );
+
             // Redirect after success
             wp_redirect(admin_url('admin.php?page=funky_bidding_add_items&success=1'));
             exit;
@@ -243,10 +271,10 @@ class Funky_Bidding_Items {
                     COUNT(b.id) as bid_count,
                     MAX(b.bid_time) as last_bid_time,
                     b.user_email,
-                    u.user_phone
+                    b.user_phone,
+                    b.user_name
              FROM {$wpdb->prefix}bidding_items i
              LEFT JOIN {$wpdb->prefix}bidding_bids b ON i.id = b.item_id
-             LEFT JOIN {$wpdb->prefix}bidding_users u ON b.user_email = u.user_email
              WHERE i.campaign_id = %d
              GROUP BY i.id
              ORDER BY current_price DESC",
@@ -289,6 +317,7 @@ class Funky_Bidding_Items {
             echo '<td>' . intval($item->bid_count) . '</td>';
             echo '<td>' . esc_html($item->user_email ? $item->user_email : 'N/A') . '</td>';
             echo '<td>' . esc_html($item->user_phone ? $item->user_phone : 'N/A') . '</td>';
+            echo '<td>' . esc_html($item->user_name ? $item->user_name : 'N/A') . '</td>';
             echo '<td>' . ($item->last_bid_time ? date('Y-m-d H:i:s', strtotime($item->last_bid_time)) : 'No bids yet') . '</td>';
             echo '<td>';
             if ($item->user_email) {

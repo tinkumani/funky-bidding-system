@@ -7,6 +7,32 @@ class Funky_Bidding_Activation {
         self::add_version_option();
     }
 
+    private static function add_foreign_key_constraints() {
+        /*global $wpdb;
+        
+        $constraints = [
+            "ALTER TABLE {$wpdb->prefix}bidding_items 
+             ADD CONSTRAINT fk_campaign_id 
+             FOREIGN KEY (campaign_id) 
+             REFERENCES {$wpdb->prefix}bidding_campaigns(id) 
+             ON DELETE CASCADE",
+            
+            "ALTER TABLE {$wpdb->prefix}bidding_bids 
+             ADD CONSTRAINT fk_item_id 
+             FOREIGN KEY (item_id) 
+             REFERENCES {$wpdb->prefix}bidding_items(id) 
+             ON DELETE CASCADE"
+        ];
+
+        foreach ($constraints as $constraint) {
+            try {
+                $wpdb->query($constraint);
+            } catch (Exception $e) {
+                error_log("Failed to add foreign key constraint. Error: " . $e->getMessage());
+            }
+        }*/
+    }
+
     public static function create_tables() {
         global $wpdb;
         $charset_collate = $wpdb->get_charset_collate();
@@ -39,11 +65,87 @@ class Funky_Bidding_Activation {
             id INT(11) NOT NULL AUTO_INCREMENT,
             item_id INT(11) NOT NULL,
             user_email VARCHAR(100) NOT NULL,
+            user_name VARCHAR(100) NOT NULL,
+            user_phone VARCHAR(100) NOT NULL,
             bid_amount DECIMAL(10,2) NOT NULL,
             bid_time DATETIME NOT NULL,
             PRIMARY KEY (id),
             KEY item_id (item_id)
-        ) $charset_collate;";
+        ) $charset_collate;
+        
+        CREATE TABLE IF NOT EXISTS {$wpdb->prefix}bidding_activity (
+            id INT(11) NOT NULL AUTO_INCREMENT,
+            item_id INT(11) NOT NULL,
+            user_email VARCHAR(100) NOT NULL,
+            bid_amount DECIMAL(10,2) NOT NULL,
+            browser VARCHAR(255),
+            ip_address VARCHAR(100),
+            time DATETIME NOT NULL,
+            PRIMARY KEY (id),
+            KEY item_id (item_id)
+        ) $charset_collate;  
+     
+        CREATE TABLE IF NOT EXISTS {$wpdb->prefix}admin_campaign_activity (
+            id INT(11) NOT NULL AUTO_INCREMENT,
+            campaign_id INT(11) NOT NULL,
+            campaign_name VARCHAR(255) NOT NULL,
+            description TEXT,
+            start_date DATETIME NOT NULL,
+            end_date DATETIME NOT NULL,
+            sponsorship_image VARCHAR(255), 
+            browser VARCHAR(255),
+            ip_address VARCHAR(100),
+            location VARCHAR(255),
+            time DATETIME NOT NULL,
+            PRIMARY KEY (id),
+            KEY campaign_id (campaign_id)
+        ) $charset_collate;
+
+        CREATE TABLE IF NOT EXISTS {$wpdb->prefix}admin_item_activity (
+            id INT(11) NOT NULL AUTO_INCREMENT,
+            item_id INT(11) NOT NULL,
+            campaign_id INT(11) NOT NULL,
+            item_name VARCHAR(255) NOT NULL,
+            item_description TEXT,
+            item_image VARCHAR(255),
+            min_bid DECIMAL(10,2) NOT NULL, 
+            max_bid DECIMAL(10,2),
+            bid_increment DECIMAL(10,2) NOT NULL,
+            browser VARCHAR(255),
+            ip_address VARCHAR(100),
+            location VARCHAR(255),
+            time DATETIME NOT NULL,
+            PRIMARY KEY (id),
+            KEY item_id (item_id)
+        ) $charset_collate;
+
+        CREATE TABLE IF NOT EXISTS {$wpdb->prefix}bidding_watchers (
+            id INT(11) NOT NULL AUTO_INCREMENT,
+            item_id INT(11) NOT NULL,
+            user_email VARCHAR(100) NOT NULL,
+            time DATETIME NOT NULL,
+            PRIMARY KEY (id),
+            KEY item_id (item_id)
+        ) $charset_collate;
+        create table if not exists {$wpdb->prefix}bidding_users (
+            id INT(11) NOT NULL AUTO_INCREMENT,
+            user_email VARCHAR(100) NOT NULL,
+            time DATETIME NOT NULL,
+            PRIMARY KEY (id),
+            KEY user_email (user_email)
+        ) $charset_collate;
+        create table if not exists {$wpdb->prefix}bidding_user_activity (
+            id INT(11) NOT NULL AUTO_INCREMENT,
+            user_email VARCHAR(100) NOT NULL,
+            browser VARCHAR(255),
+            ip_address VARCHAR(100),
+            location VARCHAR(255),
+            time DATETIME NOT NULL,
+            PRIMARY KEY (id),
+            KEY user_email (user_email)
+        ) $charset_collate;
+        ";
+        
     
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
         $result = dbDelta($sql);
@@ -70,30 +172,7 @@ class Funky_Bidding_Activation {
         }
     }
 
-    private static function add_foreign_key_constraints() {
-        global $wpdb;
-        $constraint_queries = array(
-            "ALTER TABLE {$wpdb->prefix}bidding_items 
-             ADD CONSTRAINT fk_campaign_id 
-             FOREIGN KEY (campaign_id) 
-             REFERENCES {$wpdb->prefix}bidding_campaigns(id) 
-             ON DELETE CASCADE",
-            "ALTER TABLE {$wpdb->prefix}bidding_bids 
-             ADD CONSTRAINT fk_item_id 
-             FOREIGN KEY (item_id) 
-             REFERENCES {$wpdb->prefix}bidding_items(id) 
-             ON DELETE CASCADE"
-        );
-
-        foreach ($constraint_queries as $query) {
-            $result = $wpdb->query($query);
-            if ($result === false) {
-                error_log("Failed to add foreign key constraint. Error: " . $wpdb->last_error);
-            } else {
-                error_log("Foreign key constraint added successfully.");
-            }
-        }
-    }
+    
 
     private static function add_version_option() {
         add_option('funky_bidding_version', '1.0.0');

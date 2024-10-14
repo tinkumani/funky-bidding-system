@@ -14,6 +14,8 @@ class Funky_Bidding_Shortcodes {
         add_action('wp_ajax_nopriv_watch_item', array($this, 'handle_watch_item'));
         add_action('wp_ajax_load_more_items', array($this, 'load_more_items'));
         add_action('wp_ajax_nopriv_load_more_items', array($this, 'load_more_items'));
+        add_action('wp_ajax_refresh_campaign_data', array($this, 'refresh_campaign_data'));
+        add_action('wp_ajax_nopriv_refresh_campaign_data', array($this, 'refresh_campaign_data')); 
     }
 
     public function enqueue_assets() {
@@ -335,15 +337,53 @@ class Funky_Bidding_Shortcodes {
             echo '</div>';
             if (!$is_sold) {
                 echo '<p>Time Left: <span class="timer" data-end-time="' . esc_attr($end_time) . '"></span></p>';
-                echo '<form method="POST" action="' . esc_url(admin_url('admin-post.php')) . '">';
+                echo '<form method="POST" action="' . esc_url(admin_url('admin-post.php')) . '" class="bidding-form">';
                 echo '<input type="hidden" name="action" value="place_bid">';
                 echo '<input type="hidden" name="item_id" value="' . esc_attr($item->id) . '">';
+                
+                $user_info = isset($_COOKIE['funky_bidding_user_info']) ? json_decode(stripslashes($_COOKIE['funky_bidding_user_info']), true) : null;
+                
+                if ($user_info) {
+                    echo '<div class="stored-user-info">';
+                    echo '<p>Bidding as: ' . esc_html($user_info['name']) . '</p>';
+                    echo '<p>' . esc_html($user_info['email'] ? 'Email: ' . $user_info['email'] : 'Phone: ' . $user_info['phone']) . '</p>';
+                    echo '<button type="button" class="clear-user-info">Change User Info</button>';
+                    echo '</div>';
+                    echo '<div class="user-info-fields" style="display:none;">';
+                } else {
+                    echo '<div class="user-info-fields">';
+                }
+                
+                echo '<label for="user_name">Name:</label>';
+                echo '<input type="text" name="user_name" id="user_name" value="' . esc_attr($user_info['name'] ?? '') . '" required>';
                 echo '<label for="user_email">Email:</label>';
-                echo '<input type="email" name="user_email" required>';
+                echo '<input type="email" name="user_email" id="user_email" value="' . esc_attr($user_info['email'] ?? '') . '">';
+                echo '<label for="user_phone">Phone:</label>';
+                echo '<input type="text" name="user_phone" id="user_phone" value="' . esc_attr($user_info['phone'] ?? '') . '">';
+                echo '<p class="field-note">Either Email or Phone is required</p>';
+                echo '</div>';
+                
                 echo '<label for="bid_amount">Your Bid:</label>';
-                echo '<input type="number" name="bid_amount" step="0.01" min="' . esc_attr($highest_bid + $item->bid_increment) . '" required>';
+                echo '<input type="number" name="bid_amount" id="bid_amount" step="0.01" min="' . esc_attr($highest_bid + $item->bid_increment) . '" required>';
                 echo '<input type="submit" value="Place Bid" class="funky-bidding-button">';
                 echo '</form>';
+                
+                echo '<script>
+                    jQuery(document).ready(function($) {
+                        $(".clear-user-info").on("click", function() {
+                            $(".stored-user-info").hide();
+                            $(".user-info-fields").show();
+                            document.cookie = "funky_bidding_user_info=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                        });
+                        
+                        $(".bidding-form").on("submit", function() {
+                            if ($("#user_email").val() === "" && $("#user_phone").val() === "") {
+                                alert("Please provide either an email or a phone number."+$("#user_email").val()+" "+$("#user_phone").val());
+                                return false;
+                            }
+                        });
+                    });
+                </script>';
             } else {
                 echo '<p>Sold for: $' . number_format($highest_bid, 2) . '</p>';
             }
@@ -361,11 +401,11 @@ class Funky_Bidding_Shortcodes {
             $user_email = sanitize_email($_POST['user_email']);
             $bid_amount = floatval($_POST['bid_amount']);
 
-            $item = $wpdb->get_row($wpdb->prepare("SELECT min_bid, bid_increment, max_price FROM {$wpdb->prefix}bidding_items WHERE id = %d", $item_id));
+            $item = $wpdb->get_row($wpdb->prepare("SELECT min_bid, bid_increment, max_bid FROM {$wpdb->prefix}bidding_items WHERE id = %d", $item_id));
             $highest_bid = $wpdb->get_var($wpdb->prepare("SELECT MAX(bid_amount) FROM {$wpdb->prefix}bidding_bids WHERE item_id = %d", $item_id));
             $min_next_bid = ($highest_bid) ? $highest_bid + $item->bid_increment : $item->min_bid;
 
-            if ($bid_amount >= $min_next_bid && ($item->max_price == 0 || $bid_amount <= $item->max_price)) {
+            if ($bid_amount >= $min_next_bid && ($item->max_bid == 0 || $bid_amount <= $item->max_bid)) {
                 $wpdb->insert(
                     "{$wpdb->prefix}bidding_bids",
                     array(
@@ -384,6 +424,8 @@ class Funky_Bidding_Shortcodes {
                         wp_mail($watcher->user_email, $subject, $message);
                     }
 
+                    $this->log_bidding_activity($item_id, $user_email, $bid_amount);
+
                     wp_redirect(wp_get_referer() . '&bid_success=1');
                     exit;
                 }
@@ -391,6 +433,25 @@ class Funky_Bidding_Shortcodes {
         }
         wp_redirect(wp_get_referer() . '&bid_error=1');
         exit;
+    }
+
+    private function log_bidding_activity($item_id, $user_email, $bid_amount) {
+        global $wpdb;
+        $browser = $_SERVER['HTTP_USER_AGENT'];
+        $ip_address = $_SERVER['REMOTE_ADDR'];
+        $time = current_time('mysql');
+
+        $wpdb->insert(
+            "{$wpdb->prefix}bidding_activity",
+            array(
+                'item_id' => $item_id,
+                'user_email' => $user_email,
+                'bid_amount' => $bid_amount,
+                'browser' => $browser,
+                'ip_address' => $ip_address,
+                'time' => $time
+            )
+        );
     }
 
     public function handle_watch_item() {
