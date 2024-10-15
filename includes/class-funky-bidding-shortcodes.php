@@ -310,7 +310,12 @@ class Funky_Bidding_Shortcodes {
 
             ob_start();
             echo '<div class="funky-bidding-item' . ($is_sold ? ' sold' : '') . '">';
-            echo '<div class="item-image-container" style="width: 30%; float: center; padding: 5px; box-sizing: border-box;">';
+            echo '<h5 style="text-align: left; margin: 2px;">' . esc_html($item->item_name);
+            if (!empty($item->item_id)) {
+                echo ' <span class="item-id">(ID: ' . esc_html($item->item_id) . ')</span>';
+            }
+            echo '</h5>';
+            echo '<div class="item-image-container" style="float: center; padding: 5px; box-sizing: border-box;">';
             if ($item->item_image) {
                 echo '<img src="' . esc_url($item->item_image) . '" alt="Item Image">';
             }
@@ -320,24 +325,19 @@ class Funky_Bidding_Shortcodes {
                 echo '<button class="watch-item" data-item-id="' . esc_attr($item->id) . '">Watch Item</button>';
             }
             echo '</div>';
-            echo '<div class="item-details" style="font-family: Helvetica, Arial, sans-serif; font-size: 10px; line-height: 1.4;">';
-            echo '<h4 style="text-align: left;">' . esc_html($item->item_name);
-            if (!empty($item->item_id)) {
-                echo ' <span class="item-id">(ID: ' . esc_html($item->item_id) . ')</span>';
-            }
-            echo '</h4>';
+            echo '<div class="item-details" style="font-family: Helvetica, Arial, sans-serif; font-size: 12px; line-height: 1.4;">';
             echo '<p class="item-description">' . esc_html(wp_trim_words($item->item_description, 20)) . '</p>';
-            echo '<div class="item-stats">';
-            echo '<p>Current Bid: $<span class="highest-bid">' . number_format($highest_bid, 2) . '</span></p>';
-            echo '<p>Minimum Bid: $' . esc_html($item->min_bid) . '</p>';
+            echo '<div class="item-stats" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2px;">';
+            echo '<p style="margin: 2px;">Current Bid: $<span class="highest-bid">' . number_format($highest_bid, 2) . '</span></p>';
+            echo '<p style="margin: 2px;">Minimum Bid: $' . esc_html($item->min_bid) . '</p>';
             if (!empty($item->max_bid)) {
                 echo '<p>Max Price: $' . esc_html($item->max_bid) . '</p>';
             }
-            echo '<p>Bid Increment: $' . esc_html($item->bid_increment) . '</p>';
-            echo '<p>Total Bids: ' . $bid_count . '</p>';
+            echo '<p style="margin: 2px;">Bid Increment: $' . esc_html($item->bid_increment) . '</p>';
+            echo '<p style="margin: 2px;">Total Bids: ' . $bid_count . '</p>';
             echo '</div>';
             if (!$is_sold) {
-                echo '<p class="time-left">Time Left: <span class="timer" data-end-time="' . esc_attr($end_time) . '"></span></p>';
+                echo '<p class="time-left" style="margin: 2px;">Time Left: <span class="timer" data-end-time="' . esc_attr($end_time) . '"></span></p>';
                 echo '<form method="POST" action="' . esc_url(admin_url('admin-post.php')) . '" class="bidding-form">';
                 echo '<input type="hidden" name="action" value="place_bid">';
                 echo '<input type="hidden" name="item_id" value="' . esc_attr($item->id) . '">';
@@ -347,7 +347,7 @@ class Funky_Bidding_Shortcodes {
                 if ($user_info) {
                     echo '<div class="stored-user-info">';
                     echo '<p>Temporary Login: ' . esc_html($user_info['name']) . '</p>';
-                    echo '<p>' . esc_html($user_info['email'] ? 'Email: ' . $user_info['email'] : 'Phone: ' . $user_info['phone']) . '</p>';
+                    echo '<p>' . esc_html($user_info['user_name'] ? 'UserName: ' . $user_info['user_name'] : 'Phone: ' . $user_info['user_phone']) . '</p>';
                     echo '<button type="button" class="clear-user-info">Change User Info</button>';
                     echo '<p class="user-info-disclaimer">(Your information is not shared with other users.)</p>';
                     echo '</div>';
@@ -356,24 +356,22 @@ class Funky_Bidding_Shortcodes {
                     echo '<div class="user-info-fields">';
                 }
                 
-                echo '<div class="funky-bidding-form-group">';
+                echo '<div class="funky-bidding-form">';
                 echo '<input type="text" name="user_name" id="user_name" placeholder="Name" value="' . esc_attr($user_info['name'] ?? '') . '" required>';
                 echo '</div>';
                 
-                echo '<div class="funky-bidding-form-group">';
-                echo '<input type="email" name="user_email" id="user_email" placeholder="Email" value="' . esc_attr($user_info['email'] ?? '') . '" required>';
-                echo '</div>';
-                
-                echo '<div class="funky-bidding-form-group">';
+                echo '<div class="funky-bidding-form">';
                 echo '<input type="tel" name="user_phone" id="user_phone" placeholder="Phone (Example: 1234567890)" value="' . esc_attr($user_info['phone'] ?? '') . '" pattern="[0-9]{10}" required>';
                 echo '</div>';
-                echo '</div>';
-                
+                echo '<div class="funky-bidding-form">';
                 echo '<label for="bid_amount">Your Bid:</label>';
                 echo '<input type="number" name="bid_amount" id="bid_amount" step="0.01" min="' . esc_attr($highest_bid + $item->bid_increment) . '" required>';
+                echo '<br>';
+                echo '&nbsp;';
                 echo '<input type="submit" value="Place Bid" class="funky-bidding-button">';
+                echo '</div>';
                 echo '</form>';
-                
+                echo  '</div>';
                 echo '<script>
                     jQuery(document).ready(function($) {
                         $(".clear-user-info").on("click", function() {
@@ -383,11 +381,9 @@ class Funky_Bidding_Shortcodes {
                         });
                         
                         $(".bidding-form").on("submit", function(e) {
-                            var email = $("#user_email").val();
                             var phone = $("#user_phone").val();
                             var userInfo = {
                                 name: $("#user_name").val(),
-                                email: email,
                                 phone: phone
                             };
                             document.cookie = "funky_bidding_user_info=" + JSON.stringify(userInfo) + "; path=/; max-age=2592000; SameSite=Strict";
@@ -414,10 +410,9 @@ class Funky_Bidding_Shortcodes {
     }
 
     public function handle_place_bid() {
-        if (isset($_POST['item_id'], $_POST['user_email'], $_POST['bid_amount'])) {
+        if (isset($_POST['item_id'], $_POST['user_name'], $_POST['bid_amount'])) {
             global $wpdb;
             $item_id = intval($_POST['item_id']);
-            $user_email = sanitize_email($_POST['user_email']);
             $bid_amount = floatval($_POST['bid_amount']);
 
             $item = $wpdb->get_row($wpdb->prepare("SELECT min_bid, bid_increment, max_bid FROM {$wpdb->prefix}bidding_items WHERE id = %d", $item_id));
@@ -429,7 +424,8 @@ class Funky_Bidding_Shortcodes {
                     "{$wpdb->prefix}bidding_bids",
                     array(
                         'item_id' => $item_id,
-                        'user_email' => $user_email,
+                        'user_name' => $user_name,
+                        'user_phone' => $user_phone,
                         'bid_amount' => $bid_amount,
                         'bid_time' => current_time('mysql')
                     )
@@ -443,7 +439,7 @@ class Funky_Bidding_Shortcodes {
                         wp_mail($watcher->user_email, $subject, $message);
                     }
 
-                    $this->log_bidding_activity($item_id, $user_email, $bid_amount);
+                    $this->log_bidding_activity($item_id, $_POST['user_name'], $_POST['user_phone'], $bid_amount);
 
                     wp_redirect(wp_get_referer() . '&bid_success=1');
                     exit;
@@ -454,7 +450,7 @@ class Funky_Bidding_Shortcodes {
         exit;
     }
 
-    private function log_bidding_activity($item_id, $user_email, $bid_amount) {
+    private function log_bidding_activity($item_id, $user_name, $user_phone, $bid_amount) {
         global $wpdb;
         $browser = $_SERVER['HTTP_USER_AGENT'];
         $ip_address = $_SERVER['REMOTE_ADDR'];
@@ -464,7 +460,8 @@ class Funky_Bidding_Shortcodes {
             "{$wpdb->prefix}bidding_activity",
             array(
                 'item_id' => $item_id,
-                'user_email' => $user_email,
+                'user_name' => $user_name,
+                'user_phone' => $user_phone,
                 'bid_amount' => $bid_amount,
                 'browser' => $browser,
                 'ip_address' => $ip_address,
@@ -553,7 +550,7 @@ function funky_bidding_inline_styles() {
         padding: 0;
     }
     .funky-bidding-campaign {
-        margin-bottom: 20px;
+        margin-bottom: 2px;
         padding: 10px;
         background-color: #f5f5f5;
         border-radius: 5px;
@@ -567,13 +564,13 @@ function funky_bidding_inline_styles() {
     .funky-bidding-items {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
-        gap: 20px;
-        justify-content: center;
+        gap: 0px;
+        justify-content: left;
     }
     .funky-bidding-item {
         background-color: #ffffff;
-        border-radius: 8px;
-        padding: 15px;
+        border-radius: 0px;
+        padding: 0px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         transition: transform 0.2s ease-in-out;
         position: relative;
@@ -582,14 +579,14 @@ function funky_bidding_inline_styles() {
     .funky-bidding-item:hover {
         transform: translateY(-5px);
     }
-    .funky-bidding-item h3 {
+    .funky-bidding-item h5 {
         margin-top: 0;
         font-size: 16px;
         color: #333;
     }
     .item-image-container {
         position: relative;
-        margin-bottom: 10px;
+        margin-bottom: 1px;
     }
     .item-image-container img {
         width: 100%;
