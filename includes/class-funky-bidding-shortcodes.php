@@ -310,7 +310,7 @@ class Funky_Bidding_Shortcodes {
 
             ob_start();
             echo '<div class="funky-bidding-item' . ($is_sold ? ' sold' : '') . '">';
-            echo '<div class="item-image-container" style="width: 50%; float: left; padding: 5px; box-sizing: border-box;">';
+            echo '<div class="item-image-container" style="width: 30%; float: center; padding: 5px; box-sizing: border-box;">';
             if ($item->item_image) {
                 echo '<img src="' . esc_url($item->item_image) . '" alt="Item Image">';
             }
@@ -320,12 +320,12 @@ class Funky_Bidding_Shortcodes {
                 echo '<button class="watch-item" data-item-id="' . esc_attr($item->id) . '">Watch Item</button>';
             }
             echo '</div>';
-            echo '<div class="item-details" style="font-family: Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.4;">';
-            echo '<h2>' . esc_html($item->item_name);
+            echo '<div class="item-details" style="font-family: Helvetica, Arial, sans-serif; font-size: 10px; line-height: 1.4;">';
+            echo '<h4 style="text-align: left;">' . esc_html($item->item_name);
             if (!empty($item->item_id)) {
                 echo ' <span class="item-id">(ID: ' . esc_html($item->item_id) . ')</span>';
             }
-            echo '</h2>';
+            echo '</h4>';
             echo '<p class="item-description">' . esc_html(wp_trim_words($item->item_description, 20)) . '</p>';
             echo '<div class="item-stats">';
             echo '<p>Current Bid: $<span class="highest-bid">' . number_format($highest_bid, 2) . '</span></p>';
@@ -535,16 +535,18 @@ function funky_bidding_inline_styles() {
     echo '<style>
     .funky-bidding-container {
         display: flex;
-        max-width: 1200px;
+        flex-direction: column;
+        align-items: center;
+        max-width: 100%;
         margin: 0 auto;
-        padding: 20px;
+        padding: 10px;
     }
     .funky-bidding-sidebar {
-        width: 25%;
-        padding-right: 20px;
+        width: 100%;
+        padding-bottom: 20px;
     }
     .funky-bidding-main-content {
-        width: 75%;
+        width: 100%;
     }
     .funky-bidding-campaign-list {
         list-style-type: none;
@@ -557,13 +559,16 @@ function funky_bidding_inline_styles() {
         border-radius: 5px;
     }
     .funky-bidding-items-container {
-        height: 800px;
-        overflow-y: auto;
+        width: 100%;
+        max-width: 800px;
+        margin: 0 auto;
+        overflow-x: hidden;
     }
     .funky-bidding-items {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
         gap: 20px;
+        justify-content: center;
     }
     .funky-bidding-item {
         background-color: #ffffff;
@@ -571,7 +576,8 @@ function funky_bidding_inline_styles() {
         padding: 15px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         transition: transform 0.2s ease-in-out;
-        position: relative; /* Add this line */
+        position: relative;
+        width: 100%;
     }
     .funky-bidding-item:hover {
         transform: translateY(-5px);
@@ -642,52 +648,9 @@ function funky_bidding_inline_styles() {
         font-style: italic;
         color: #666;
     }
-    @media (max-width: 768px) {
-        .funky-bidding-container {
-            flex-direction: column;
-            padding: 10px;
-        }
-        .funky-bidding-sidebar,
-        .funky-bidding-main-content {
-            width: 100%;
-        }
-        .funky-bidding-items-container {
-            height: auto;
-            max-height: none;
-        }
+    @media (max-width: 767px) {
         .funky-bidding-items {
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-        }
-        .funky-bidding-item {
-            padding: 8px;
-        }
-        .funky-bidding-item h3 {
-            font-size: 14px;
-            margin-bottom: 5px;
-        }
-        .item-image-container {
-            margin-bottom: 5px;
-        }
-        .item-image-container img {
-            aspect-ratio: 1 / 1;
-        }
-        .watch-item {
-            font-size: 10px;
-            padding: 2px 4px;
-        }
-        .funky-bidding-item p {
-            font-size: 12px;
-            margin: 3px 0;
-        }
-        .funky-bidding-button {
-            padding: 5px 8px;
-            font-size: 12px;
-        }
-        .bid-form input[type="email"],
-        .bid-form input[type="number"] {
-            width: 100%;
-            margin-bottom: 5px;
+            grid-template-columns: 1fr;
         }
     }
     </style>';
