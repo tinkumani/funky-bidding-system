@@ -358,10 +358,9 @@ class Funky_Bidding_Shortcodes {
                 echo '<label for="user_name">Name:</label>';
                 echo '<input type="text" name="user_name" id="user_name" value="' . esc_attr($user_info['name'] ?? '') . '" required>';
                 echo '<label for="user_email">Email:</label>';
-                echo '<input type="email" name="user_email" id="user_email" value="' . esc_attr($user_info['email'] ?? '') . '">';
-                echo '<label for="user_phone">Phone:</label>';
-                echo '<input type="tel" name="user_phone" id="user_phone" value="' . esc_attr($user_info['phone'] ?? '') . '" pattern="[0-9]{10}">';
-                echo '<p class="field-note">Either Email or Phone is required</p>';
+                echo '<input type="email" name="user_email" id="user_email" value="' . esc_attr($user_info['email'] ?? '') . '" required>';
+                echo '<label for="user_phone">Phone: (Example 1234567890)</label>';
+                echo '<input type="tel" name="user_phone" id="user_phone" value="' . esc_attr($user_info['phone'] ?? '') . '" pattern="[0-9]{10}" required>';
                 echo '</div>';
                 
                 echo '<label for="bid_amount">Your Bid:</label>';
@@ -380,16 +379,6 @@ class Funky_Bidding_Shortcodes {
                         $(".bidding-form").on("submit", function(e) {
                             var email = $("#user_email").val();
                             var phone = $("#user_phone").val();
-                            if (!email && !phone) {
-                                alert("Please provide either an email or a phone number.");
-                                e.preventDefault();
-                                return false;
-                            }
-                            if (phone && !/^[0-9]{10}$/.test(phone)) {
-                                alert("Please enter a valid 10-digit phone number.");
-                                e.preventDefault();
-                                return false;
-                            }
                             var userInfo = {
                                 name: $("#user_name").val(),
                                 email: email,
