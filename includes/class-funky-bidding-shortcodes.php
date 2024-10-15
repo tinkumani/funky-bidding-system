@@ -310,10 +310,11 @@ class Funky_Bidding_Shortcodes {
 
             ob_start();
             echo '<div class="funky-bidding-item' . ($is_sold ? ' sold' : '') . '">';
-            echo '<h5 style="text-align: left; margin: 2px;">' . esc_html($item->item_name);
+            echo '<h5 style="text-align: left; margin: 2px; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif;">';
             if (!empty($item->item_id)) {
-                echo ' <span class="item-id">(ID: ' . esc_html($item->item_id) . ')</span>';
+                echo ' <span class="item-id">' . esc_html($item->item_id) . '.</span>';
             }
+            echo '&nbsp' . esc_html($item->item_name);
             echo '</h5>';
             echo '<div class="item-image-container" style="float: center; padding: 5px; box-sizing: border-box;">';
             if ($item->item_image) {
@@ -325,7 +326,7 @@ class Funky_Bidding_Shortcodes {
                 echo '<button class="watch-item" data-item-id="' . esc_attr($item->id) . '">Watch Item</button>';
             }
             echo '</div>';
-            echo '<div class="item-details" style="font-family: Helvetica, Arial, sans-serif; font-size: 12px; line-height: 1.4;">';
+            echo '<div class="item-details" style="font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif; font-size: 12px; line-height: 1.4; background-color: #ccc;">';
             echo '<p class="item-description">' . esc_html(wp_trim_words($item->item_description, 20)) . '</p>';
             echo '<div class="item-stats" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2px;">';
             echo '<p style="margin: 2px;">Current Bid: $<span class="highest-bid">' . number_format($highest_bid, 2) . '</span></p>';
@@ -335,9 +336,10 @@ class Funky_Bidding_Shortcodes {
             }
             echo '<p style="margin: 2px;">Bid Increment: $' . esc_html($item->bid_increment) . '</p>';
             echo '<p style="margin: 2px;">Total Bids: ' . $bid_count . '</p>';
-            echo '</div>';
+          
             if (!$is_sold) {
                 echo '<p class="time-left" style="margin: 2px;">Time Left: <span class="timer" data-end-time="' . esc_attr($end_time) . '"></span></p>';
+                echo '</div>';
                 echo '<form method="POST" action="' . esc_url(admin_url('admin-post.php')) . '" class="bidding-form">';
                 echo '<input type="hidden" name="action" value="place_bid">';
                 echo '<input type="hidden" name="item_id" value="' . esc_attr($item->id) . '">';
@@ -345,7 +347,7 @@ class Funky_Bidding_Shortcodes {
                 $user_info = isset($_COOKIE['funky_bidding_user_info']) ? json_decode(stripslashes($_COOKIE['funky_bidding_user_info']), true) : null;
                 
                 if ($user_info) {
-                    echo '<div class="stored-user-info">';
+                    echo '<div class="stored-user-info" style="background-color: #ccc;">';
                     echo '<p>Temporary Login: ' . esc_html($user_info['name']) . '</p>';
                     echo '<p>' . esc_html($user_info['user_name'] ? 'UserName: ' . $user_info['user_name'] : 'Phone: ' . $user_info['user_phone']) . '</p>';
                     echo '<button type="button" class="clear-user-info">Change User Info</button>';
@@ -393,6 +395,7 @@ class Funky_Bidding_Shortcodes {
                 </script>';
             } else {
                 echo '<p class="sold-price">Sold for: $' . number_format($highest_bid, 2) . '</p>';
+                echo '</div>';
             }
             echo '</div>';
             echo '</div>';
@@ -564,17 +567,20 @@ function funky_bidding_inline_styles() {
     .funky-bidding-items {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
-        gap: 0px;
+        gap: 10px;
         justify-content: left;
+        border-radius: 8px;
+        padding: 1px;
+        background-color: #ccc;
     }
     .funky-bidding-item {
         background-color: #ffffff;
         border-radius: 0px;
         padding: 0px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         transition: transform 0.2s ease-in-out;
         position: relative;
         width: 100%;
+        border: 2px solid #ebebeb;
     }
     .funky-bidding-item:hover {
         transform: translateY(-5px);
