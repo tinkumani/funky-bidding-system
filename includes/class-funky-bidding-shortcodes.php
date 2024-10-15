@@ -408,7 +408,7 @@ class Funky_Bidding_Shortcodes {
             echo '<div class="item-stats" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2px;">';
             echo '<p style="margin: 2px;">Current Bid: $<span class="highest-bid">' . number_format($highest_bid, 2) . '</span></p>';
             echo '<p style="margin: 2px;">Minimum Bid: $' . esc_html($item->min_bid) . '</p>';
-            if (!empty($item->max_bid)) {
+            if (!empty($item->max_bid) && $item->max_bid <= 0) {
                 echo '<p>Max Price: $' . esc_html($item->max_bid) . '</p>';
             }
             echo '<p style="margin: 2px;">Bid Increment: $' . esc_html($item->bid_increment) . '</p>';
@@ -449,9 +449,9 @@ class Funky_Bidding_Shortcodes {
                 echo '<div class="funky-bidding-form">';
                 echo '<label for="bid_amount">Your Bid:</label>';
                 echo '<div class="bid-input-container">';
-                echo '<input type="number" name="bid_amount" id="bid_amount" step="5" value="' . esc_attr($highest_bid + $item->bid_increment) . '" required>';
+                echo '<input type="number" name="bid_amount" id="bid_amount" step="5" value="' . esc_attr($highest_bid > 0 ? $highest_bid + $item->bid_increment : $item->min_bid) . '" required>';
                 echo '</div>';
-                echo '<p id="bid_suggestion">Suggested bid: $<span id="suggested_bid">' . number_format($highest_bid + $item->bid_increment, 2) . '</span></p>';
+                echo '<p id="bid_suggestion">Suggested bid: $<span id="suggested_bid">' . number_format($highest_bid > 0 ? $highest_bid + $item->bid_increment : $item->min_bid, 2) . '</span></p>';
                 echo '<br>';
                 echo '&nbsp;';
                 echo '<input type="submit" value="Place Bid" class="funky-bidding-button">';
