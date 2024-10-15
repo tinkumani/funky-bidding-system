@@ -121,7 +121,7 @@ class Funky_Bidding_Shortcodes {
             echo '<div class="funky-bidding-campaign-details">';
             echo '<p class="funky-bidding-campaign-description">' . esc_html($campaign->description) . '</p>';
             
-            echo '<div class="funky-bidding-campaign-stats" style="font-family: \'Georgia\', serif; color: #8B4513;">';
+            echo '<div class="funky-bidding-campaign-stats">';
             echo '<div class="funky-bidding-stat"><span class="funky-bidding-stat-label">Total Raised:</span> <span class="funky-bidding-stat-value">$' . number_format($total_money, 2) . '</span></div>';
             echo '<div class="funky-bidding-stat"><span class="funky-bidding-stat-label">Items Sold:</span> <span class="funky-bidding-stat-value">' . $items_sold . '</span></div>';
             echo '<div class="funky-bidding-stat"><span class="funky-bidding-stat-label">Items Remaining:</span> <span class="funky-bidding-stat-value">' . $items_to_be_sold . '</span></div>';
@@ -131,7 +131,7 @@ class Funky_Bidding_Shortcodes {
             
             if ($is_active) {
                 $view_items_url = esc_url(get_permalink() . '?campaign_id=' . $campaign->id);
-                echo '<a href="' . $view_items_url . '" class="funky-bidding-button" id="view-items-' . esc_attr($campaign->id) . '">View Items</a>';
+                echo '<a href="' . $view_items_url . '" class="funky-bidding-button" id="view-items-' . esc_attr($campaign->id) . '">View Items</a><br>&nbsp;';
                 
                 // Add JavaScript to auto-click the first active campaign's "View Items" button
                 static $first_active_campaign = true;

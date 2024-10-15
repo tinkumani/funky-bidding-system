@@ -169,23 +169,15 @@
     font-size: 14px;
     color: #777;
     display: block;
-}
-
-.funky-bidding-stat {
-    background-color: #f8f8f8;
-    border-radius: 4px;
-}
-
-.funky-bidding-stat-label {
-    font-size: 14px;
-    color: #777;
-    display: block;
+    font-weight: bold;
+    text-transform: uppercase;
 }
 
 .funky-bidding-stat-value {
     font-size: 18px;
     color: #333;
     font-weight: bold;
+    text-transform: uppercase;
 }
 .funky-bidding-button:hover {
     background-color: #2980b9;
@@ -213,9 +205,5 @@
         flex: 0 0 auto;
         margin-right: 0;
         margin-bottom: 2px;
-    }
-
-    .funky-bidding-campaign-stats {
-        grid-template-columns: 1fr;
     }
 }
