@@ -464,13 +464,22 @@ class Funky_Bidding_Shortcodes {
                         });
                         
                         $(".bidding-form").on("submit", function(e) {
-                            var phone = $("#user_phone").val();
-                            var userInfo = {
-                                name: $("#user_name").val(),
-                                phone: phone
-                            };
-                            document.cookie = "funky_bidding_user_info=" + JSON.stringify(userInfo) + "; path=/; max-age=2592000; SameSite=Strict";
-                            return true;
+                            e.preventDefault();
+                            var formData = $(this).serializeArray();
+                            var userInfo = {};
+                            
+                            $.each(formData, function(i, field){
+                                if (field.name === "user_name" || field.name === "user_phone") {
+                                    userInfo[field.name] = field.value;
+                                }
+                            });
+
+                            if (userInfo.user_name && userInfo.user_phone) {
+                                document.cookie = "funky_bidding_user_info=" + JSON.stringify(userInfo) + "; path=/; max-age=2592000; SameSite=Strict";
+                                $(this).unbind("submit").submit();
+                            } else {
+                                alert("Please fill in both name and phone number.");
+                            }
                         });
                     });
                 </script>';
