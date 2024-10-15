@@ -386,7 +386,7 @@ class Funky_Bidding_Shortcodes {
             $is_sold = ($highest_bid >= $item->max_bid && $item->max_bid != 0) || ($time_left <= 0);
 
             ob_start();
-            echo '<div class="funky-bidding-item' . ($is_sold ? ' sold' : '') . '">';
+            echo '<div id="item-' . esc_attr($item->id) . '" class="funky-bidding-item' . ($is_sold ? ' sold' : '') . '">';
             echo '<h5 style="text-align: left; margin: 2px; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif;">';
             if (!empty($item->item_id)) {
                 echo ' <span class="item-id">' . esc_html($item->item_id) . '.</span>';
@@ -420,6 +420,7 @@ class Funky_Bidding_Shortcodes {
                 echo '<form method="POST" action="' . esc_url(admin_url('admin-post.php')) . '" class="bidding-form">';
                 echo '<input type="hidden" name="action" value="place_bid">';
                 echo '<input type="hidden" name="item_id" value="' . esc_attr($item->id) . '">';
+                echo '<input type="hidden" name="redirect_anchor" value="item-' . esc_attr($item->id) . '">';
                 
                 $user_info = isset($_COOKIE['funky_bidding_user_info']) ? json_decode(stripslashes($_COOKIE['funky_bidding_user_info']), true) : null;
                 
@@ -445,7 +446,10 @@ class Funky_Bidding_Shortcodes {
                 echo '</div>';
                 echo '<div class="funky-bidding-form">';
                 echo '<label for="bid_amount">Your Bid:</label>';
-                echo '<input type="number" name="bid_amount" id="bid_amount" step="0.01" min="' . esc_attr($highest_bid + $item->bid_increment) . '" required>';
+                echo '<div class="bid-input-container">';
+                echo '<input type="number" name="bid_amount" id="bid_amount" step="5" value="' . esc_attr($highest_bid + $item->bid_increment) . '" required>';
+                echo '</div>';
+                echo '<p id="bid_suggestion">Suggested bid: $<span id="suggested_bid">' . number_format($highest_bid + $item->bid_increment, 2) . '</span></p>';
                 echo '<br>';
                 echo '&nbsp;';
                 echo '<input type="submit" value="Place Bid" class="funky-bidding-button">';
@@ -523,12 +527,21 @@ class Funky_Bidding_Shortcodes {
 
                     $this->log_bidding_activity($item_id, $user_name, $user_phone, $bid_amount);
 
-                    wp_safe_redirect(add_query_arg('bid_success', '1', wp_get_referer()));
+                    $redirect_url = add_query_arg(array(
+                        'bid_success' => '1',
+                        'item_id' => $item_id
+                    ), wp_get_referer());
+                    wp_safe_redirect($redirect_url . '#item-' . $item_id);
                     exit;
                 }
             }
         }
-        wp_safe_redirect(add_query_arg('bid_error', '1', wp_get_referer()));
+
+        $redirect_url = add_query_arg(array(
+            'bid_error' => '1',
+            'item_id' => $item_id
+        ), wp_get_referer());
+        wp_safe_redirect($redirect_url . '#item-' . $item_id);
         exit;
     }
 
