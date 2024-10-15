@@ -4,6 +4,84 @@
     margin: 0 auto;
     padding: 20px;
 }
+/* Form styles inspired by Facebook */
+.funky-bidding-form {
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.funky-bidding-form-group {
+    margin-bottom: 15px;
+}
+
+.funky-bidding-form input[type="text"],
+.funky-bidding-form input[type="email"],
+.funky-bidding-form input[type="tel"],
+.funky-bidding-form input[type="number"] {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #dddfe2;
+    border-radius: 4px;
+    font-size: 16px;
+    color: #1c1e21;
+}
+
+.funky-bidding-form input[type="text"]:focus,
+.funky-bidding-form input[type="email"]:focus,
+.funky-bidding-form input[type="tel"]:focus,
+.funky-bidding-form input[type="number"]:focus {
+    border-color: #1877f2;
+    box-shadow: 0 0 0 2px #e7f3ff;
+    outline: none;
+}
+
+.funky-bidding-form label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #1c1e21;
+}
+
+.funky-bidding-button {
+    width: 100%;
+    padding: 12px;
+    background-color: #1877f2;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.funky-bidding-button:hover {
+    background-color: #166fe5;
+}
+
+.funky-bidding-button:active {
+    background-color: #1464c8;
+}
+
+.funky-bidding-form ::-webkit-input-placeholder {
+    color: #8a8d91;
+}
+
+.funky-bidding-form ::-moz-placeholder {
+    color: #8a8d91;
+}
+
+.funky-bidding-form :-ms-input-placeholder {
+    color: #8a8d91;
+}
+
+.funky-bidding-form :-moz-placeholder {
+    color: #8a8d91;
+}
 
 .funky-bidding-campaign {
     background-color: #ffffff;

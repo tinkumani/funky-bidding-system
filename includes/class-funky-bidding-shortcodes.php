@@ -310,7 +310,7 @@ class Funky_Bidding_Shortcodes {
 
             ob_start();
             echo '<div class="funky-bidding-item' . ($is_sold ? ' sold' : '') . '">';
-            echo '<div class="item-image-container">';
+            echo '<div class="item-image-container" style="width: 50%; float: left; padding: 5px; box-sizing: border-box;">';
             if ($item->item_image) {
                 echo '<img src="' . esc_url($item->item_image) . '" alt="Item Image">';
             }
@@ -320,7 +320,7 @@ class Funky_Bidding_Shortcodes {
                 echo '<button class="watch-item" data-item-id="' . esc_attr($item->id) . '">Watch Item</button>';
             }
             echo '</div>';
-            echo '<div class="item-details">';
+            echo '<div class="item-details" style="font-family: Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.4;">';
             echo '<h2>' . esc_html($item->item_name);
             if (!empty($item->item_id)) {
                 echo ' <span class="item-id">(ID: ' . esc_html($item->item_id) . ')</span>';
@@ -356,12 +356,17 @@ class Funky_Bidding_Shortcodes {
                     echo '<div class="user-info-fields">';
                 }
                 
-                echo '<label for="user_name">Name:</label>';
-                echo '<input type="text" name="user_name" id="user_name" value="' . esc_attr($user_info['name'] ?? '') . '" required>';
-                echo '<label for="user_email">Email:</label>';
-                echo '<input type="email" name="user_email" id="user_email" value="' . esc_attr($user_info['email'] ?? '') . '" required>';
-                echo '<label for="user_phone">Phone: (Example 1234567890)</label>';
-                echo '<input type="tel" name="user_phone" id="user_phone" value="' . esc_attr($user_info['phone'] ?? '') . '" pattern="[0-9]{10}" required>';
+                echo '<div class="funky-bidding-form-group">';
+                echo '<input type="text" name="user_name" id="user_name" placeholder="Name" value="' . esc_attr($user_info['name'] ?? '') . '" required>';
+                echo '</div>';
+                
+                echo '<div class="funky-bidding-form-group">';
+                echo '<input type="email" name="user_email" id="user_email" placeholder="Email" value="' . esc_attr($user_info['email'] ?? '') . '" required>';
+                echo '</div>';
+                
+                echo '<div class="funky-bidding-form-group">';
+                echo '<input type="tel" name="user_phone" id="user_phone" placeholder="Phone (Example: 1234567890)" value="' . esc_attr($user_info['phone'] ?? '') . '" pattern="[0-9]{10}" required>';
+                echo '</div>';
                 echo '</div>';
                 
                 echo '<label for="bid_amount">Your Bid:</label>';
