@@ -633,10 +633,10 @@ function funky_bidding_inline_styles() {
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
     .funky-bidding-button {
-        background-color: #0074D9;
+        background-color: #de9425;
         color: white;
         border: none;
-        padding: 8px 12px;
+        padding: 8px 100px;
         border-radius: 4px;
         cursor: pointer;
         transition: background-color 0.2s ease-in-out;
