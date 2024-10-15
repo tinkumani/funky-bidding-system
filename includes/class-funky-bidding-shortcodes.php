@@ -120,14 +120,91 @@ class Funky_Bidding_Shortcodes {
             
             echo '<div class="funky-bidding-campaign-details">';
             echo '<p class="funky-bidding-campaign-description">' . esc_html($campaign->description) . '</p>';
-            
             echo '<div class="funky-bidding-campaign-stats">';
             echo '<div class="funky-bidding-stat"><span class="funky-bidding-stat-label">Total Raised:</span> <span class="funky-bidding-stat-value">$' . number_format($total_money, 2) . '</span></div>';
             echo '<div class="funky-bidding-stat"><span class="funky-bidding-stat-label">Items Sold:</span> <span class="funky-bidding-stat-value">' . $items_sold . '</span></div>';
             echo '<div class="funky-bidding-stat"><span class="funky-bidding-stat-label">Items Remaining:</span> <span class="funky-bidding-stat-value">' . $items_to_be_sold . '</span></div>';
-            echo '<div class="funky-bidding-stat"><span class="funky-bidding-stat-label">Start Date:</span> <span class="funky-bidding-stat-value">' . esc_html($campaign->start_date) . '</span></div>';
-            echo '<div class="funky-bidding-stat"><span class="funky-bidding-stat-label">End Date:</span> <span class="funky-bidding-stat-value">' . esc_html($campaign->end_date) . '</span></div>';
+            echo '<div class="funky-bidding-stat"><span class="funky-bidding-stat-label">Time Remaining:</span> <span class="funky-bidding-stat-value"><span class="hourglass">⏳</span> <span class="time-remaining" data-end-time="' . esc_attr($end_time) . '"></span></span></div>';      
+            echo '<div class="funky-bidding-stat">';
+            echo '<span class="funky-bidding-stat-label">Start Date:</span>';
+            echo '<div class="funky-bidding-stat-value date-display">';
+            echo '<div class="date-day">' . date('d', strtotime($campaign->start_date)) . '</div>';
+            echo '<div class="date-month-year">';
+            echo '<div>' . date('M Y', strtotime($campaign->start_date)) . '</div>';
+            echo '<div>' . date('h:i A', strtotime($campaign->start_date)) . ' CDT</div>';
             echo '</div>';
+            echo '</div>';
+            echo '</div>';
+            echo '<style>
+                .date-display {
+                    display: flex;
+                    align-items: center;
+                }
+                .date-day {
+                    font-size: 2em;
+                    margin-right: 10px;
+                }
+                .date-month-year {
+                    font-size: 0.8em;
+                    line-height: 1.2;
+                }
+            </style>';
+            echo '<div class="funky-bidding-stat"><span class="funky-bidding-stat-label">End Date:</span> ';
+            echo '<div class="funky-bidding-stat-value date-display">';
+            echo '<div class="date-day">' . date('d', strtotime($campaign->end_date)) . '</div>';
+            echo '<div class="date-month-year">';
+            echo '<div>' . date('M Y', strtotime($campaign->end_date)) . '</div>';
+            echo '<div>' . date('h:i A T', strtotime($campaign->end_date)) . '</div>';
+            echo '</div>';
+            echo '</div>';
+            echo '</div>';
+            echo '<style>
+                .date-display {
+                    display: flex;
+                    align-items: center;
+                }
+                .date-day {
+                    font-size: 2em;
+                    margin-right: 10px;
+                }
+                .date-month-year {
+                    font-size: 0.8em;
+                    line-height: 1.2;
+                }
+            </style>';
+            echo '<script>
+            jQuery(document).ready(function($) {
+                function updateTimeRemaining() {
+                    $(".time-remaining").each(function() {
+                        var endTime = $(this).data("end-time");
+                        var now = Math.floor(Date.now() / 1000);
+                        var timeLeft = endTime - now;
+                        
+                        if (timeLeft > 0) {
+                            var days = Math.floor(timeLeft / 86400);
+                            var hours = Math.floor((timeLeft % 86400) / 3600);
+                            var minutes = Math.floor((timeLeft % 3600) / 60);
+                            var seconds = timeLeft % 60;
+                            $(this).text(days + "d " + hours + "h " + minutes + "m " + seconds + "s");
+                        } else {
+                            $(this).text("Ended");
+                        }
+                    });
+                    
+                    $(".hourglass").toggleClass("flip");
+                }
+                
+                setInterval(updateTimeRemaining, 1000);
+                
+                $("<style>")
+                    .prop("type", "text/css")
+                    .html("\
+                    .hourglass { display: inline-block; transition: transform 0.5s; }\
+                    .hourglass.flip { transform: rotate(180deg); }\
+                    ")
+                    .appendTo("head");
+            });
+            </script>';
             
             if ($is_active) {
                 $view_items_url = esc_url(get_permalink() . '?campaign_id=' . $campaign->id);
@@ -365,6 +442,7 @@ class Funky_Bidding_Shortcodes {
                 echo '<div class="funky-bidding-form">';
                 echo '<input type="tel" name="user_phone" id="user_phone" placeholder="Phone (Example: 1234567890)" value="' . esc_attr($user_info['phone'] ?? '') . '" pattern="[0-9]{10}" required>';
                 echo '</div>';
+                echo '</div>';
                 echo '<div class="funky-bidding-form">';
                 echo '<label for="bid_amount">Your Bid:</label>';
                 echo '<input type="number" name="bid_amount" id="bid_amount" step="0.01" min="' . esc_attr($highest_bid + $item->bid_increment) . '" required>';
@@ -373,7 +451,6 @@ class Funky_Bidding_Shortcodes {
                 echo '<input type="submit" value="Place Bid" class="funky-bidding-button">';
                 echo '</div>';
                 echo '</form>';
-                echo  '</div>';
                 echo '<script>
                     jQuery(document).ready(function($) {
                         $(".clear-user-info").on("click", function() {
@@ -413,9 +490,11 @@ class Funky_Bidding_Shortcodes {
     }
 
     public function handle_place_bid() {
-        if (isset($_POST['item_id'], $_POST['user_name'], $_POST['bid_amount'])) {
+        if (isset($_POST['item_id'], $_POST['user_name'], $_POST['user_phone'], $_POST['bid_amount'])) {
             global $wpdb;
             $item_id = intval($_POST['item_id']);
+            $user_name = sanitize_text_field($_POST['user_name']);
+            $user_phone = sanitize_text_field($_POST['user_phone']);
             $bid_amount = floatval($_POST['bid_amount']);
 
             $item = $wpdb->get_row($wpdb->prepare("SELECT min_bid, bid_increment, max_bid FROM {$wpdb->prefix}bidding_items WHERE id = %d", $item_id));
@@ -423,7 +502,7 @@ class Funky_Bidding_Shortcodes {
             $min_next_bid = ($highest_bid) ? $highest_bid + $item->bid_increment : $item->min_bid;
 
             if ($bid_amount >= $min_next_bid && ($item->max_bid == 0 || $bid_amount <= $item->max_bid)) {
-                $wpdb->insert(
+                $result = $wpdb->insert(
                     "{$wpdb->prefix}bidding_bids",
                     array(
                         'item_id' => $item_id,
@@ -434,7 +513,7 @@ class Funky_Bidding_Shortcodes {
                     )
                 );
 
-                if ($wpdb->insert_id) {
+                if ($result !== false) {
                     $watchers = $wpdb->get_results($wpdb->prepare("SELECT user_email FROM {$wpdb->prefix}bidding_watchers WHERE item_id = %d", $item_id));
                     foreach ($watchers as $watcher) {
                         $subject = "New bid placed on watched item";
@@ -442,14 +521,14 @@ class Funky_Bidding_Shortcodes {
                         wp_mail($watcher->user_email, $subject, $message);
                     }
 
-                    $this->log_bidding_activity($item_id, $_POST['user_name'], $_POST['user_phone'], $bid_amount);
+                    $this->log_bidding_activity($item_id, $user_name, $user_phone, $bid_amount);
 
-                    wp_redirect(wp_get_referer() . '&bid_success=1');
+                    wp_safe_redirect(add_query_arg('bid_success', '1', wp_get_referer()));
                     exit;
                 }
             }
         }
-        wp_redirect(wp_get_referer() . '&bid_error=1');
+        wp_safe_redirect(add_query_arg('bid_error', '1', wp_get_referer()));
         exit;
     }
 
@@ -636,7 +715,7 @@ function funky_bidding_inline_styles() {
         background-color: #de9425;
         color: white;
         border: none;
-        padding: 8px 100px;
+        padding: 8px 50px;
         border-radius: 4px;
         cursor: pointer;
         transition: background-color 0.2s ease-in-out;
