@@ -101,20 +101,20 @@ class Funky_Bidding_Shortcodes {
             ));
             $items_to_be_sold = $total_items - $items_sold;
             
-            echo '<div class="funky-bidding-campaign ' . $class . '" data-campaign-id="' . esc_attr($campaign->id) . '" style="font-family: \'Brush Script MT\', cursive; color: orange;">';
+            echo '<div class="funky-bidding-campaign ' . $class . '" data-campaign-id="' . esc_attr($campaign->id) . '" style="font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif; color: #1c1e21;">';
             echo '<div class="funky-bidding-campaign-header">';
-            echo '<h2 class="funky-bidding-campaign-title" style="font-family: \'Brush Script MT\', cursive; color: orange;">' . esc_html($campaign->name) . '</h2>';
+            echo '<h2 class="funky-bidding-campaign-title" style="font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif; color: #1c1e21;">' . esc_html($campaign->name) . '</h2>';
             if ($is_active) {
-                echo '<div class="funky-bidding-timer" data-end-time="' . esc_attr($end_time) . '" style="font-family: \'Brush Script MT\', cursive; color: orange;"></div>';
+                echo '<div class="funky-bidding-timer" data-end-time="' . esc_attr($end_time) . '" style="font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif; color: #1c1e21;"></div>';
             } else {
-                echo '<div class="funky-bidding-cancelled" style="font-family: \'Brush Script MT\', cursive; color: orange;"><span class="dashicons dashicons-no-alt"></span> Campaign Ended</div>';
+                echo '<div class="funky-bidding-cancelled" style="font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif; color: #1c1e21;"><span class="dashicons dashicons-no-alt"></span> Campaign Ended</div>';
             }
             echo '</div>';
             
             echo '<div class="funky-bidding-campaign-content">';
             echo '<div class="funky-bidding-campaign-image-container">';
             if ($campaign->sponsorship_image) {
-                echo '<img class="funky-bidding-campaign-image" src="' . esc_url($campaign->sponsorship_image) . '" alt="Sponsorship Image">';
+                echo '<img class="funky-bidding-campaign-image" src="' . esc_url($campaign->sponsorship_image) . '" alt="Sponsorship Image" style="width: 100%; height: auto;">';
             }
             echo '</div>';
             
@@ -553,8 +553,6 @@ function funky_bidding_inline_styles() {
         padding: 0;
     }
     .funky-bidding-campaign {
-        margin-bottom: 2px;
-        padding: 10px;
         background-color: #f5f5f5;
         border-radius: 5px;
     }
@@ -581,6 +579,7 @@ function funky_bidding_inline_styles() {
         position: relative;
         width: 100%;
         border: 2px solid #ebebeb;
+        box-shadow: none;
     }
     .funky-bidding-item:hover {
         transform: translateY(-5px);
