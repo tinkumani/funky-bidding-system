@@ -426,22 +426,24 @@ class Funky_Bidding_Shortcodes {
                 
                 if ($user_info) {
                     echo '<div class="stored-user-info" style="background-color: #ccc;">';
-                    echo '<p>Temporary Login: ' . esc_html($user_info['name']) . '</p>';
+                    echo '<p>Temporary Login: </p>';
                     echo '<p>' . esc_html($user_info['user_name'] ? 'UserName: ' . $user_info['user_name'] : 'Phone: ' . $user_info['user_phone']) . '</p>';
                     echo '<button type="button" class="clear-user-info">Change User Info</button>';
                     echo '<p class="user-info-disclaimer">(Your information is not shared with other users.)</p>';
                     echo '</div>';
                     echo '<div class="user-info-fields" style="display:none;">';
+                    echo '<input type="hidden" name="user_name" value="' . esc_attr($user_info['user_name']) . '">';
+                    echo '<input type="hidden" name="user_phone" value="' . esc_attr($user_info['user_phone']) . '">';
                 } else {
                     echo '<div class="user-info-fields">';
                 }
                 
                 echo '<div class="funky-bidding-form">';
-                echo '<input type="text" name="user_name" id="user_name" placeholder="Name" value="' . esc_attr($user_info['name'] ?? '') . '" required>';
+                echo '<input type="text" name="user_name" id="user_name" placeholder="Name" value="' . esc_attr($user_info['user_name'] ?? '') . '" required>';
                 echo '</div>';
                 
                 echo '<div class="funky-bidding-form">';
-                echo '<input type="tel" name="user_phone" id="user_phone" placeholder="Phone (Example: 1234567890)" value="' . esc_attr($user_info['phone'] ?? '') . '" pattern="[0-9]{10}" required>';
+                echo '<input type="tel" name="user_phone" id="user_phone" placeholder="Phone (Example: 1234567890)" value="' . esc_attr($user_info['user_phone'] ?? '') . '" pattern="[0-9]{10}" required>';
                 echo '</div>';
                 echo '</div>';
                 echo '<div class="funky-bidding-form">';
@@ -466,11 +468,16 @@ class Funky_Bidding_Shortcodes {
                         $(".bidding-form").on("submit", function(e) {
                             e.preventDefault();
                             var formData = $(this).serializeArray();
-                            var userInfo = {};
+                            var userInfo = {
+                                user_name: "",
+                                user_phone: ""
+                            };
                             
-                            $.each(formData, function(i, field){
-                                if (field.name === "user_name" || field.name === "user_phone") {
-                                    userInfo[field.name] = field.value;
+                            $.each(formData, function(i, field) {
+                                if (field.name === "user_name") {
+                                    userInfo.user_name = field.value;
+                                } else if (field.name === "user_phone") {
+                                    userInfo.user_phone = field.value;
                                 }
                             });
 
