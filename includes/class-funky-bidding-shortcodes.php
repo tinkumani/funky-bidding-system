@@ -295,6 +295,9 @@ class Funky_Bidding_Shortcodes {
         ));
 
         $html_items = array();
+        $active_items = array();
+        $sold_items = array();
+
         foreach ($items as $item) {
             $highest_bid = $wpdb->get_var($wpdb->prepare("SELECT MAX(bid_amount) FROM {$wpdb->prefix}bidding_bids WHERE item_id = %d", $item->id));
             $bid_count = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->prefix}bidding_bids WHERE item_id = %d", $item->id));
@@ -307,27 +310,25 @@ class Funky_Bidding_Shortcodes {
 
             ob_start();
             echo '<div class="funky-bidding-item' . ($is_sold ? ' sold' : '') . '">';
+            echo '<div class="item-image-container">';
+            if ($item->item_image) {
+                echo '<img src="' . esc_url($item->item_image) . '" alt="Item Image">';
+            }
             if ($is_sold) {
                 echo '<div class="sold-banner">SOLD</div>';
+            } elseif (!$is_sold) {
+                echo '<button class="watch-item" data-item-id="' . esc_attr($item->id) . '">Watch Item</button>';
             }
-            echo '<h2 style="font-size: 0.9em;">' . esc_html($item->item_name);
+            echo '</div>';
+            echo '<div class="item-details">';
+            echo '<h2>' . esc_html($item->item_name);
             if (!empty($item->item_id)) {
-                echo ' (ID: ' . esc_html($item->item_id) . ')';
+                echo ' <span class="item-id">(ID: ' . esc_html($item->item_id) . ')</span>';
             }
             echo '</h2>';
-            if ($item->item_image) {
-                echo '<div class="item-image-container">';
-                echo '<img src="' . esc_url($item->item_image) . '" alt="Item Image">';
-                if (!$is_sold) {
-                    echo '<button class="watch-item" data-item-id="' . esc_attr($item->id) . '">Watch Item</button>';
-                }
-                echo '</div>';
-            }
-            echo '<div class="item-details" style="font-size: 0.8em;">';
-            echo '<p>' . esc_html(wp_trim_words($item->item_description, 20)) . '</p>';
-            echo '</div>';
+            echo '<p class="item-description">' . esc_html(wp_trim_words($item->item_description, 20)) . '</p>';
             echo '<div class="item-stats">';
-            echo '<p>Current Highest Bid: $<span class="highest-bid">' . number_format($highest_bid, 2) . '</span></p>';
+            echo '<p>Current Bid: $<span class="highest-bid">' . number_format($highest_bid, 2) . '</span></p>';
             echo '<p>Minimum Bid: $' . esc_html($item->min_bid) . '</p>';
             if (!empty($item->max_bid)) {
                 echo '<p>Max Price: $' . esc_html($item->max_bid) . '</p>';
@@ -336,7 +337,7 @@ class Funky_Bidding_Shortcodes {
             echo '<p>Total Bids: ' . $bid_count . '</p>';
             echo '</div>';
             if (!$is_sold) {
-                echo '<p>Time Left: <span class="timer" data-end-time="' . esc_attr($end_time) . '"></span></p>';
+                echo '<p class="time-left">Time Left: <span class="timer" data-end-time="' . esc_attr($end_time) . '"></span></p>';
                 echo '<form method="POST" action="' . esc_url(admin_url('admin-post.php')) . '" class="bidding-form">';
                 echo '<input type="hidden" name="action" value="place_bid">';
                 echo '<input type="hidden" name="item_id" value="' . esc_attr($item->id) . '">';
@@ -348,7 +349,7 @@ class Funky_Bidding_Shortcodes {
                     echo '<p>Temporary Login: ' . esc_html($user_info['name']) . '</p>';
                     echo '<p>' . esc_html($user_info['email'] ? 'Email: ' . $user_info['email'] : 'Phone: ' . $user_info['phone']) . '</p>';
                     echo '<button type="button" class="clear-user-info">Change User Info</button>';
-                    echo '<p class="user-info-disclaimer" style="font-size: 0.8em; color: #666;">(Your information is not shared with other users.)</p>';
+                    echo '<p class="user-info-disclaimer">(Your information is not shared with other users.)</p>';
                     echo '</div>';
                     echo '<div class="user-info-fields" style="display:none;">';
                 } else {
@@ -390,11 +391,19 @@ class Funky_Bidding_Shortcodes {
                     });
                 </script>';
             } else {
-                echo '<p>Sold for: $' . number_format($highest_bid, 2) . '</p>';
+                echo '<p class="sold-price">Sold for: $' . number_format($highest_bid, 2) . '</p>';
             }
             echo '</div>';
-            $html_items[] = ob_get_clean();
+            echo '</div>';
+            
+            if ($is_sold) {
+                $sold_items[] = ob_get_clean();
+            } else {
+                $active_items[] = ob_get_clean();
+            }
         }
+        
+        $html_items = array_merge($active_items, $sold_items);
 
         wp_send_json_success(['items' => $html_items]);
     }
