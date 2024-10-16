@@ -21,6 +21,8 @@ class Funky_Bidding_Shortcodes {
     public function enqueue_assets() {
         wp_enqueue_style('funky-bidding-styles', plugin_dir_url(__FILE__) . '../assets/css/funky-bidding-styles.css');
         wp_enqueue_script('jquery');
+        wp_enqueue_script('jquery-ui-core');
+        wp_enqueue_script('jquery-ui-dialog');
         wp_enqueue_script('funky-bidding-scripts', plugin_dir_url(__FILE__) . '../assets/js/funky-bidding-scripts.js', array('jquery'), '1.0', true);
         wp_localize_script('funky-bidding-scripts', 'funkyBidding', array(
             'ajaxurl' => admin_url('admin-ajax.php'),
@@ -70,7 +72,6 @@ class Funky_Bidding_Shortcodes {
             return '<p class="funky-bidding-message">No campaigns are currently running.</p>';
         }
 
-        // Enqueue the new stylesheet
         wp_enqueue_style('funky-bidding-campaign-styles', plugin_dir_url(__FILE__) . '../assets/css/funky-bidding-campaign-styles.css');
 
         ob_start();
@@ -80,7 +81,6 @@ class Funky_Bidding_Shortcodes {
             $is_active = time() < $end_time;
             $class = $is_active ? 'active' : 'inactive';
             
-            // Fetch campaign statistics
             $total_money = $wpdb->get_var($wpdb->prepare(
                 "SELECT SUM(b.bid_amount) 
                 FROM {$wpdb->prefix}bidding_bids b
@@ -135,20 +135,6 @@ class Funky_Bidding_Shortcodes {
             echo '</div>';
             echo '</div>';
             echo '</div>';
-            echo '<style>
-                .date-display {
-                    display: flex;
-                    align-items: center;
-                }
-                .date-day {
-                    font-size: 2em;
-                    margin-right: 10px;
-                }
-                .date-month-year {
-                    font-size: 0.8em;
-                    line-height: 1.2;
-                }
-            </style>';
             echo '<div class="funky-bidding-stat"><span class="funky-bidding-stat-label">End Date:</span> ';
             echo '<div class="funky-bidding-stat-value date-display">';
             echo '<div class="date-day">' . date('d', strtotime($campaign->end_date)) . '</div>';
@@ -158,65 +144,17 @@ class Funky_Bidding_Shortcodes {
             echo '</div>';
             echo '</div>';
             echo '</div>';
-            echo '<style>
-                .date-display {
-                    display: flex;
-                    align-items: center;
-                }
-                .date-day {
-                    font-size: 2em;
-                    margin-right: 10px;
-                }
-                .date-month-year {
-                    font-size: 0.8em;
-                    line-height: 1.2;
-                }
-            </style>';
-            echo '<script>
-            jQuery(document).ready(function($) {
-                function updateTimeRemaining() {
-                    $(".time-remaining").each(function() {
-                        var endTime = $(this).data("end-time");
-                        var now = Math.floor(Date.now() / 1000);
-                        var timeLeft = endTime - now;
-                        
-                        if (timeLeft > 0) {
-                            var days = Math.floor(timeLeft / 86400);
-                            var hours = Math.floor((timeLeft % 86400) / 3600);
-                            var minutes = Math.floor((timeLeft % 3600) / 60);
-                            var seconds = timeLeft % 60;
-                            $(this).text(days + "d " + hours + "h " + minutes + "m " + seconds + "s");
-                        } else {
-                            $(this).text("Ended");
-                        }
-                    });
-                    
-                    $(".hourglass").toggleClass("flip");
-                }
-                
-                setInterval(updateTimeRemaining, 1000);
-                
-                $("<style>")
-                    .prop("type", "text/css")
-                    .html("\
-                    .hourglass { display: inline-block; transition: transform 0.5s; }\
-                    .hourglass.flip { transform: rotate(180deg); }\
-                    ")
-                    .appendTo("head");
-            });
-            </script>';
             
             if ($is_active) {
                 $view_items_url = esc_url(get_permalink() . '?campaign_id=' . $campaign->id);
                 echo '<a href="' . $view_items_url . '" class="funky-bidding-button" id="view-items-' . esc_attr($campaign->id) . '">View Items</a><br>&nbsp;';
                 
-                // Add JavaScript to auto-click the first active campaign's "View Items" button
                 static $first_active_campaign = true;
                 if ($first_active_campaign) {
                     echo '<script>
-                    setTimeout(function() {
-                        document.getElementById("view-items-' . esc_js($campaign->id) . '").click();
-                    }, 100);
+                    jQuery(document).ready(function($) {
+                        $("#view-items-' . esc_js($campaign->id) . '").trigger("click");
+                    });
                     </script>';
                     $first_active_campaign = false;
                 }
@@ -227,12 +165,64 @@ class Funky_Bidding_Shortcodes {
         }
         echo '</div>';
 
+        echo '<script>
+        jQuery(document).ready(function($) {
+            function updateTimeRemaining() {
+                $(".time-remaining").each(function() {
+                    var endTime = $(this).data("end-time");
+                    var now = Math.floor(Date.now() / 1000);
+                    var timeLeft = endTime - now;
+                    
+                    if (timeLeft > 0) {
+                        var days = Math.floor(timeLeft / 86400);
+                        var hours = Math.floor((timeLeft % 86400) / 3600);
+                        var minutes = Math.floor((timeLeft % 3600) / 60);
+                        var seconds = timeLeft % 60;
+                        $(this).text(days + "d " + hours + "h " + minutes + "m " + seconds + "s");
+                    } else {
+                        $(this).text("Ended");
+                    }
+                });
+                
+                $(".hourglass").toggleClass("flip");
+            }
+            
+            setInterval(updateTimeRemaining, 1000);
+            
+            $("<style>")
+                .prop("type", "text/css")
+                .html("\
+                .hourglass { display: inline-block; transition: transform 0.5s; }\
+                .hourglass.flip { transform: rotate(180deg); }\
+                ")
+                .appendTo("head");
+        });
+        </script>';
+
         return ob_get_clean();
     }
 
     public function display_items($atts) {
         $campaign_id = isset($_GET['campaign_id']) ? intval($_GET['campaign_id']) : 0;
+        if (!$campaign_id) {
+            return '<p>No campaign selected.</p>';
+        }
+
+        global $wpdb;
+        $campaign = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}bidding_campaigns WHERE id = %d", $campaign_id));
         
+        if (!$campaign) {
+            return '<p>Invalid campaign selected.</p>';
+        }
+
+        wp_enqueue_script('jquery');
+        wp_enqueue_script('jquery-ui-dialog');
+        wp_enqueue_style('wp-jquery-ui-dialog');
+
+        wp_localize_script('jquery', 'funkyBidding', array(
+            'ajaxurl' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('funky_bidding_nonce')
+        ));
         ob_start();
         echo '<div id="funky-bidding-items-container" class="funky-bidding-items-container" data-campaign-id="' . esc_attr($campaign_id) . '">';
         echo '<div id="funky-bidding-items" class="funky-bidding-items"></div>';
@@ -246,12 +236,12 @@ class Funky_Bidding_Shortcodes {
             var $container = $("#funky-bidding-items-container");
             var $itemsContainer = $("#funky-bidding-items");
             var $loader = $("#funky-bidding-loader");
-            var lastScrollTop = 0;
-            var scrollThreshold = 200;
+            var hasMoreItems = true;
 
             function loadItems() {
-                if (loading) return;
+                if (loading || !hasMoreItems) return;
                 loading = true;
+                
                 $loader.show();
 
                 $.ajax({
@@ -269,6 +259,7 @@ class Funky_Bidding_Shortcodes {
                             page++;
                             initializeNewItems();
                         } else {
+                            hasMoreItems = false;
                             $loader.text("No more items to load.");
                         }
                         loading = false;
@@ -282,16 +273,14 @@ class Funky_Bidding_Shortcodes {
                 });
             }
 
-            $container.on("scroll", function() {
-                var st = $container.scrollTop();
-                if (st > lastScrollTop) {
-                    // Scrolling down
-                    if ($container.scrollTop() + $container.innerHeight() >= $itemsContainer.height() - scrollThreshold) {
-                        loadItems();
-                    }
+            function checkScroll() {
+                if ($container.height() + $container.scrollTop() >= $itemsContainer.height() - 200) {
+                    loadItems();
                 }
-                lastScrollTop = st;
-            });
+            }
+
+            $container.on("scroll", checkScroll);
+            $(window).on("resize", checkScroll);
 
             loadItems();
 
@@ -360,15 +349,12 @@ class Funky_Bidding_Shortcodes {
 
         $campaign_id = isset($_POST['campaign_id']) ? intval($_POST['campaign_id']) : 0;
         $page = isset($_POST['page']) ? intval($_POST['page']) : 1;
-        $items_per_page = 10;
-
         global $wpdb;
         $items = $wpdb->get_results($wpdb->prepare(
             "SELECT i.*, c.end_date FROM {$wpdb->prefix}bidding_items i 
             JOIN {$wpdb->prefix}bidding_campaigns c ON i.campaign_id = c.id 
-            WHERE i.campaign_id = %d 
-            LIMIT %d OFFSET %d",
-            $campaign_id, $items_per_page, ($page - 1) * $items_per_page
+            WHERE i.campaign_id = %d",
+            $campaign_id
         ));
 
         $html_items = array();

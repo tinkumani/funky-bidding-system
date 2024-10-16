@@ -320,8 +320,29 @@ class Funky_Bidding_Items {
             echo '<td>' . esc_html($item->user_name ? $item->user_name : 'N/A') . '</td>';
             echo '<td>' . ($item->last_bid_time ? date('Y-m-d H:i:s', strtotime($item->last_bid_time)) : 'No bids yet') . '</td>';
             echo '<td>';
-            if ($item->user_email) {
-                echo '<a href="mailto:' . esc_attr($item->user_email) . '?subject=Congratulations on Your Winning Bid&body=Congratulations on winning the bid for ' . esc_attr($item->item_name) . '. Here are the instructions to collect your item: [Insert Instructions Here]" class="button">Send Email</a>';
+            if ($item->user_name) {
+                echo '<a href="#" class="winner-info" data-name="' . esc_attr($item->user_name) . '" data-phone="' . esc_attr($item->user_phone) . '" data-email="' . esc_attr($item->user_email) . '">' . esc_html($item->user_name) . '</a>';
+                echo '<script>
+                    jQuery(document).ready(function($) {
+                        $(".winner-info").on("click", function(e) {
+                            e.preventDefault();
+                            var name = $(this).data("name");
+                            var phone = $(this).data("phone");
+                            var email = $(this).data("email");
+                            $("<div>")
+                                .html("Winner: " + name + "<br>Phone: " + phone + "<br>Email: " + email)
+                                .dialog({
+                                    title: "Winner Information",
+                                    modal: true,
+                                    buttons: {
+                                        "Close": function() {
+                                            $(this).dialog("close");
+                                        }
+                                    }
+                                });
+                        });
+                    });
+                </script>';
             } else {
                 echo 'No winner yet';
             }
