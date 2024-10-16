@@ -449,7 +449,8 @@ class Funky_Bidding_Shortcodes {
                 echo '<div class="funky-bidding-form">';
                 echo '<label for="bid_amount">Your Bid:</label>';
                 echo '<div class="bid-input-container">';
-                echo '<input type="number" name="bid_amount" id="bid_amount" step="5" value="' . esc_attr($highest_bid > 0 ? $highest_bid + $item->bid_increment : $item->min_bid) . '" required>';
+                $suggested_bid = $highest_bid > 0 ? $highest_bid + $item->bid_increment : $item->min_bid;
+                echo '<input type="number" name="bid_amount" id="bid_amount" step="5" min="' . esc_attr($suggested_bid) . '" value="' . esc_attr($suggested_bid) . '" required>';
                 echo '</div>';
                 echo '<p id="bid_suggestion">Suggested bid: $<span id="suggested_bid">' . number_format($highest_bid > 0 ? $highest_bid + $item->bid_increment : $item->min_bid, 2) . '</span></p>';
                 echo '<br>';
