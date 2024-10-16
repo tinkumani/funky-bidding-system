@@ -408,7 +408,7 @@ class Funky_Bidding_Shortcodes {
             echo '<div class="item-stats" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2px;">';
             echo '<p style="margin: 2px;">Current Bid: $<span class="highest-bid">' . number_format($highest_bid, 2) . '</span></p>';
             echo '<p style="margin: 2px;">Minimum Bid: $' . esc_html($item->min_bid) . '</p>';
-            if (!empty($item->max_bid) && $item->max_bid <= 0) {
+            if ($item->max_bid > 0) {
                 echo '<p>Max Price: $' . esc_html($item->max_bid) . '</p>';
             }
             echo '<p style="margin: 2px;">Bid Increment: $' . esc_html($item->bid_increment) . '</p>';
