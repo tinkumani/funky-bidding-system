@@ -72,19 +72,18 @@ class Funky_Bidding_Activation {
             PRIMARY KEY (id),
             KEY item_id (item_id)
         ) $charset_collate;
-        
         CREATE TABLE IF NOT EXISTS {$wpdb->prefix}bidding_activity (
             id INT(11) NOT NULL AUTO_INCREMENT,
             item_id INT(11) NOT NULL,
-            user_email VARCHAR(100) NOT NULL,
+            user_name VARCHAR(100) NOT NULL,
+            user_phone VARCHAR(20) NOT NULL,
             bid_amount DECIMAL(10,2) NOT NULL,
-            browser VARCHAR(255),
-            ip_address VARCHAR(100),
+            browser VARCHAR(255) NOT NULL,
+            ip_address VARCHAR(45) NOT NULL,
             time DATETIME NOT NULL,
             PRIMARY KEY (id),
             KEY item_id (item_id)
-        ) $charset_collate;  
-     
+        ) $charset_collate;
         CREATE TABLE IF NOT EXISTS {$wpdb->prefix}admin_campaign_activity (
             id INT(11) NOT NULL AUTO_INCREMENT,
             campaign_id INT(11) NOT NULL,
