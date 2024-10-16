@@ -441,7 +441,7 @@ class Funky_Bidding_Shortcodes {
                 }
                 echo '<input type="number" name="bid_amount" id="bid_amount" step="5" min="' . esc_attr($suggested_bid) . '" value="' . esc_attr($suggested_bid) . '" required>';
                 echo '</div>';
-                echo '<p id="bid_suggestion">Suggested bid: $<span id="suggested_bid">' . number_format($highest_bid > 0 ? $highest_bid + $item->bid_increment : $item->min_bid, 2) . '</span></p>';
+                echo '<p id="bid_suggestion">Suggested bid: $<span id="suggested_bid">' . number_format($suggested_bid, 2) . '</span></p>';
                 echo '<br>';
                 echo '&nbsp;';
                 echo '<input type="submit" value="Place Bid" class="funky-bidding-button">';
@@ -521,6 +521,9 @@ class Funky_Bidding_Shortcodes {
 
             $highest_bid = $wpdb->get_var($wpdb->prepare("SELECT MAX(bid_amount) FROM {$wpdb->prefix}bidding_bids WHERE item_id = %d", $item_id));
             $min_next_bid = ($highest_bid) ? $highest_bid + $item->bid_increment : $item->min_bid;
+            if ($item->max_bid > 0) {
+                $min_next_bid = min($min_next_bid, $item->max_bid);
+            }
 
             // Log the bid validation details
             error_log("Highest bid: $highest_bid, Minimum next bid: $min_next_bid");
