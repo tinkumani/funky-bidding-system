@@ -436,6 +436,9 @@ class Funky_Bidding_Shortcodes {
                 echo '<label for="bid_amount">Your Bid:</label>';
                 echo '<div class="bid-input-container">';
                 $suggested_bid = $highest_bid > 0 ? $highest_bid + $item->bid_increment : $item->min_bid;
+                if ($item->max_bid > 0 && $suggested_bid > $item->max_bid) {
+                    $suggested_bid = $item->max_bid;
+                }
                 echo '<input type="number" name="bid_amount" id="bid_amount" step="5" min="' . esc_attr($suggested_bid) . '" value="' . esc_attr($suggested_bid) . '" required>';
                 echo '</div>';
                 echo '<p id="bid_suggestion">Suggested bid: $<span id="suggested_bid">' . number_format($highest_bid > 0 ? $highest_bid + $item->bid_increment : $item->min_bid, 2) . '</span></p>';
@@ -497,6 +500,10 @@ class Funky_Bidding_Shortcodes {
     }
 
     public function handle_place_bid() {
+        // Log the start of the function and all POST data
+        error_log('handle_place_bid function started');
+        error_log('POST data: ' . print_r($_POST, true));
+
         if (isset($_POST['item_id'], $_POST['user_name'], $_POST['user_phone'], $_POST['bid_amount'])) {
             global $wpdb;
             $item_id = intval($_POST['item_id']);
@@ -504,9 +511,19 @@ class Funky_Bidding_Shortcodes {
             $user_phone = sanitize_text_field($_POST['user_phone']);
             $bid_amount = floatval($_POST['bid_amount']);
 
+            // Log the input values
+            error_log("Input values: item_id=$item_id, user_name=$user_name, user_phone=$user_phone, bid_amount=$bid_amount");
+
             $item = $wpdb->get_row($wpdb->prepare("SELECT min_bid, bid_increment, max_bid FROM {$wpdb->prefix}bidding_items WHERE id = %d", $item_id));
+            
+            // Log the item details
+            error_log("Item details: " . print_r($item, true));
+
             $highest_bid = $wpdb->get_var($wpdb->prepare("SELECT MAX(bid_amount) FROM {$wpdb->prefix}bidding_bids WHERE item_id = %d", $item_id));
             $min_next_bid = ($highest_bid) ? $highest_bid + $item->bid_increment : $item->min_bid;
+
+            // Log the bid validation details
+            error_log("Highest bid: $highest_bid, Minimum next bid: $min_next_bid");
 
             if ($bid_amount >= $min_next_bid && ($item->max_bid == 0 || $bid_amount <= $item->max_bid)) {
                 $result = $wpdb->insert(
@@ -520,12 +537,22 @@ class Funky_Bidding_Shortcodes {
                     )
                 );
 
+                // Log the database insertion result
+                error_log("Database insertion result: " . ($result !== false ? "Success" : "Failure"));
+
                 if ($result !== false) {
                     $watchers = $wpdb->get_results($wpdb->prepare("SELECT user_email FROM {$wpdb->prefix}bidding_watchers WHERE item_id = %d", $item_id));
+                    
+                    // Log the number of watchers
+                    error_log("Number of watchers: " . count($watchers));
+
                     foreach ($watchers as $watcher) {
                         $subject = "New bid placed on watched item";
                         $message = "A new bid of $" . number_format($bid_amount, 2) . " has been placed on the item you're watching.";
-                        wp_mail($watcher->user_email, $subject, $message);
+                        $mail_result = wp_mail($watcher->user_email, $subject, $message);
+                        
+                        // Log the email sending result
+                        error_log("Email sent to {$watcher->user_email}: " . ($mail_result ? "Success" : "Failure"));
                     }
 
                     $this->log_bidding_activity($item_id, $user_name, $user_phone, $bid_amount);
@@ -534,16 +561,36 @@ class Funky_Bidding_Shortcodes {
                         'bid_success' => '1',
                         'item_id' => $item_id
                     ), wp_get_referer());
+                    
+                    // Log the redirect URL
+                    error_log("Redirect URL: $redirect_url");
+
                     wp_safe_redirect($redirect_url . '#item-' . $item_id);
                     exit;
                 }
+            } else {
+                // Log why the bid was not accepted
+                error_log("Bid not accepted. Bid amount: $bid_amount, Min next bid: $min_next_bid, Max bid: {$item->max_bid}");
             }
+        } else {
+            // Log which POST variables are missing
+            $missing = array();
+            foreach (['item_id', 'user_name', 'user_phone', 'bid_amount'] as $key) {
+                if (!isset($_POST[$key])) {
+                    $missing[] = $key;
+                }
+            }
+            error_log("Missing POST variables: " . implode(", ", $missing));
         }
 
         $redirect_url = add_query_arg(array(
             'bid_error' => '1',
             'item_id' => $item_id
         ), wp_get_referer());
+        
+        // Log the error redirect URL
+        error_log("Error redirect URL: $redirect_url");
+
         wp_safe_redirect($redirect_url . '#item-' . $item_id);
         exit;
     }
