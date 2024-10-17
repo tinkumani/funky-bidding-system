@@ -531,6 +531,8 @@ class Funky_Bidding_Shortcodes {
         error_log('handle_place_bid function started');
         error_log('POST data: ' . print_r($_POST, true));
 
+        $response = array('success' => false, 'message' => '');
+
         if (isset($_POST['item_id'], $_POST['user_name'], $_POST['user_phone'], $_POST['bid_amount'])) {
             global $wpdb;
             $item_id = intval($_POST['item_id']);
@@ -541,10 +543,16 @@ class Funky_Bidding_Shortcodes {
             // Log the input values
             error_log("Input values: item_id=$item_id, user_name=$user_name, user_phone=$user_phone, bid_amount=$bid_amount");
 
-            $item = $wpdb->get_row($wpdb->prepare("SELECT min_bid, bid_increment, max_bid FROM {$wpdb->prefix}bidding_items WHERE id = %d", $item_id));
+            $item = $wpdb->get_row($wpdb->prepare("SELECT id, item_name, min_bid, bid_increment, max_bid FROM {$wpdb->prefix}bidding_items WHERE id = %d", $item_id));
             
             // Log the item details
             error_log("Item details: " . print_r($item, true));
+
+            if (!$item) {
+                $response['message'] = 'Item not found.';
+                wp_send_json($response);
+                return;
+            }
 
             $highest_bid = $wpdb->get_var($wpdb->prepare("SELECT MAX(bid_amount) FROM {$wpdb->prefix}bidding_bids WHERE item_id = %d", $item_id));
             $min_next_bid = ($highest_bid) ? $highest_bid + $item->bid_increment : $item->min_bid;
@@ -571,38 +579,45 @@ class Funky_Bidding_Shortcodes {
                 error_log("Database insertion result: " . ($result !== false ? "Success" : "Failure"));
 
                 if ($result !== false) {
-                    $watchers = $wpdb->get_results($wpdb->prepare("SELECT user_email FROM {$wpdb->prefix}bidding_watchers WHERE item_id = %d", $item_id));
-                    
-                    // Log the number of watchers
-                    error_log("Number of watchers: " . count($watchers));
-
-                    foreach ($watchers as $watcher) {
-                        $subject = "New bid placed on watched item";
-                        $message = "A new bid of $" . number_format($bid_amount, 2) . " has been placed on the item you're watching.";
-                        $mail_result = wp_mail($watcher->user_email, $subject, $message);
-                        
-                        // Log the email sending result
-                        error_log("Email sent to {$watcher->user_email}: " . ($mail_result ? "Success" : "Failure"));
-                    }
-
                     $this->log_bidding_activity($item_id, $user_name, $user_phone, $bid_amount);
 
-                    $redirect_url = add_query_arg(array(
-                        'bid_success' => '1',
-                        'item_id' => $item_id
-                    ), wp_get_referer());
-                    
-                    // Log the redirect URL
-                    error_log("Redirect URL: $redirect_url");
+                    if ($bid_amount == $item->max_bid) {
+                        $response['success'] = true;
+                        $response['message'] = "Congratulations! You've won the auction for {$item->item_name}!";
+                    } else {
+                        $response['success'] = true;
+                        $response['message'] = "Your bid of $" . number_format($bid_amount, 2) . " for {$item->item_name} has been placed successfully.";
+                    }
+                    // Notify watchers
+                    $watchers = $wpdb->get_results($wpdb->prepare(
+                        "SELECT user_email FROM {$wpdb->prefix}bidding_watchers WHERE item_id = %d",
+                        $item_id
+                    ));
 
-                    wp_safe_redirect($redirect_url . '#item-' . $item_id);
-                    exit;
+                    if ($watchers) {
+                        $subject = "New bid placed on {$item->item_name}";
+                        $message = "A new bid of $" . number_format($bid_amount, 2) . " has been placed on {$item->item_name}.\n\n";
+                        $message .= "Current highest bid: $" . number_format($bid_amount, 2) . "\n";
+                        $message .= "Visit the auction page to place your bid!";
+
+                        foreach ($watchers as $watcher) {
+                            wp_mail($watcher->user_email, $subject, $message);
+                        }
+
+                        error_log("Notified " . count($watchers) . " watchers about new bid on item ID: $item_id");
+                    }
+
+                    // Notify watchers (code omitted for brevity)
+                } else {
+                    $response['message'] = "Error placing bid. Please contact the treasurer (treasurer@stthomastexas.org) for assistance.";
                 }
             } else {
+                $response['message'] = "Invalid bid amount. Minimum bid is $" . number_format($min_next_bid, 2) . ".";
                 // Log why the bid was not accepted
                 error_log("Bid not accepted. Bid amount: $bid_amount, Min next bid: $min_next_bid, Max bid: {$item->max_bid}");
             }
         } else {
+            $response['message'] = "Missing required information. Please fill in all fields.";
             // Log which POST variables are missing
             $missing = array();
             foreach (['item_id', 'user_name', 'user_phone', 'bid_amount'] as $key) {
@@ -613,16 +628,7 @@ class Funky_Bidding_Shortcodes {
             error_log("Missing POST variables: " . implode(", ", $missing));
         }
 
-        $redirect_url = add_query_arg(array(
-            'bid_error' => '1',
-            'item_id' => $item_id
-        ), wp_get_referer());
-        
-        // Log the error redirect URL
-        error_log("Error redirect URL: $redirect_url");
-
-        wp_safe_redirect($redirect_url . '#item-' . $item_id);
-        exit;
+        wp_send_json($response);
     }
 
     private function log_bidding_activity($item_id, $user_name, $user_phone, $bid_amount) {
