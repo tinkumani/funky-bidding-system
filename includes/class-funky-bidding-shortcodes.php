@@ -372,7 +372,14 @@ class Funky_Bidding_Shortcodes {
             $is_sold = ($highest_bid >= $item->max_bid && $item->max_bid != 0) || ($time_left <= 0);
 
             ob_start();
-            echo '<div id="item-' . esc_attr($item->id) . '" class="funky-bidding-item' . ($is_sold ? ' sold' : '') . '">';
+            $item_id = esc_attr($item->id);
+            $max_bid_ref = "max_bid_{$item_id}";
+            $min_bid_ref = "min_bid_{$item_id}";
+            $current_price_ref = "current_price_{$item_id}";
+            $next_increment_ref = "next_increment_{$item_id}";
+            $bid_count_ref = "bid_count_{$item_id}";
+
+            echo '<div id="item-' . $item_id . '" class="funky-bidding-item' . ($is_sold ? ' sold' : '') . '">';
             echo '<h5 style="text-align: left; margin: 2px; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif;">';
             if (!empty($item->item_id)) {
                 echo ' <span class="item-id">' . esc_html($item->item_id) . '.</span>';
@@ -386,19 +393,19 @@ class Funky_Bidding_Shortcodes {
             if ($is_sold) {
                 echo '<div class="sold-banner">SOLD</div>';
             } elseif (!$is_sold) {
-                echo '<button class="watch-item" data-item-id="' . esc_attr($item->id) . '">Watch Item</button>';
+                echo '<button class="watch-item" data-item-id="' . $item_id . '">Watch Item</button>';
             }
             echo '</div>';
             echo '<div class="item-details" style="font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif; font-size: 12px; line-height: 1.4; background-color: #ccc;">';
             echo '<p class="item-description">' . esc_html(wp_trim_words($item->item_description, 20)) . '</p>';
             echo '<div class="item-stats" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2px;">';
-            echo '<p style="margin: 2px;">Current Bid: $<span class="highest-bid">' . number_format($highest_bid, 2) . '</span></p>';
-            echo '<p style="margin: 2px;">Minimum Bid: $' . esc_html($item->min_bid) . '</p>';
+            echo '<p style="margin: 2px;">Current Bid: $<span class="highest-bid" id="' . $current_price_ref . '">' . number_format($highest_bid, 2) . '</span></p>';
+            echo '<p style="margin: 2px;">Minimum Bid: $<span id="' . $min_bid_ref . '">' . esc_html($item->min_bid) . '</span></p>';
             if ($item->max_bid > 0) {
-                echo '<p>Max Price: $' . esc_html($item->max_bid) . '</p>';
+                echo '<p>Max Price: $<span id="' . $max_bid_ref . '">' . esc_html($item->max_bid) . '</span></p>';
             }
-            echo '<p style="margin: 2px;">Bid Increment: $' . esc_html($item->bid_increment) . '</p>';
-            echo '<p style="margin: 2px;">Total Bids: ' . $bid_count . '</p>';
+            echo '<p style="margin: 2px;">Bid Increment: $<span id="' . $next_increment_ref . '">' . esc_html($item->bid_increment) . '</span></p>';
+            echo '<p style="margin: 2px;">Total Bids: <span id="' . $bid_count_ref . '">' . $bid_count . '</span></p>';
           
             if (!$is_sold) {
                 echo '<p class="time-left" style="margin: 2px;">Time Left: <span class="timer" data-end-time="' . esc_attr($end_time) . '"></span></p>';
@@ -459,10 +466,19 @@ class Funky_Bidding_Shortcodes {
                                 data: formData + "&action=place_bid&nonce=" + funkyBidding.nonce,
                                 success: function(response) {
                                     if (response.success) {
-                                        $("#bid-success-message").show().delay(3000).fadeOut();
-                                        // Optionally, update the bid information here
+                                        $("#bid-success-message").text(response.message).show().delay(3000).fadeOut();
+                                        // Update the item"s max bid and other values
+                                        $("#max-bid-" + response.item_id).text("$" + response.max_bid.toFixed(2));
+                                        $("#current-price-" + response.item_id).text("$" + response.current_price.toFixed(2));
+                                        $("#bid-count-" + response.item_id).text(response.bid_count);
+                                        $("#highest-bidder-" + response.item_id).text(response.highest_bidder);
+                                        // Update the suggested bid
+                                        var newSuggestedBid = Math.min(response.max_bid, response.current_price + response.bid_increment);
+                                        $("#suggested_bid").text(newSuggestedBid.toFixed(2));
+                                        $("#bid_amount").attr("min", newSuggestedBid).val(newSuggestedBid);
                                     } else {
-                                        alert("Error: " + response.data.message);
+                                        var errorMessage = response.message || "An unknown error occurred";
+                                        alert("Error: " + errorMessage);
                                     }
                                 },
                                 error: function() {
@@ -588,6 +604,18 @@ class Funky_Bidding_Shortcodes {
                         $response['success'] = true;
                         $response['message'] = "Your bid of $" . number_format($bid_amount, 2) . " for {$item->item_name} has been placed successfully.";
                     }
+
+                    // Add item details to the response
+                    $response['item'] = array(
+                        'id' => $item->id,
+                        'name' => $item->item_name,
+                        'min_bid' => $item->min_bid,
+                        'bid_increment' => $item->bid_increment,
+                        'max_bid' => $item->max_bid,
+                        'current_bid' => $bid_amount,
+                        'highest_bidder' => $user_name
+                    );
+
                     // Notify watchers
                     $watchers = $wpdb->get_results($wpdb->prepare(
                         "SELECT user_email FROM {$wpdb->prefix}bidding_watchers WHERE item_id = %d",
