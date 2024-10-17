@@ -484,7 +484,7 @@ class Funky_Bidding_Shortcodes {
                                             if (response.item.max_bid != null && parseFloat(response.item.max_bid) > 0) {
                                                 newSuggestedBid = Math.min(newSuggestedBid, parseFloat(response.item.max_bid));
                                             }
-                                            $form.find("#suggested_bid").val(newSuggestedBid.toFixed(2));
+                                            $form.find("#suggested_bid_label").val("Suggested Bid: $" + newSuggestedBid.toFixed(2));
                                             $form.find("#bid_amount").attr("min", newSuggestedBid).val(newSuggestedBid);
                                         }
                                     } else {
@@ -499,7 +499,8 @@ class Funky_Bidding_Shortcodes {
                         });
                     });
                 </script>';
-                echo '<p id="bid_suggestion">Suggested bid: $<span id="suggested_bid">' . number_format($suggested_bid, 2) . '</span></p>';
+                echo '<input type="text" name="suggested_bid_label" id="suggested_bid_label" value="Suggested Bid: $' . esc_attr($suggested_bid) . '" disabled style="border: none; background: none; font-weight: 400; width: 100%; font-family: -apple-system, system-ui, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif; font-size: 12px;">';
+                echo '<input type="text" name="suggested_bid_label" id="suggested_bid_label"  . esc_attr($suggested_bid) . "" value="" . esc_attr($suggested_bid) . "" disabled style="border: none; background: none; font-weight: 400; width: 100%; font-family: -apple-system, system-ui, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif; font-size: 12px;">';
                 echo '<button type="button" class="funky-bidding-button ' . $form_class . '">Place Bid</button>';
                 echo '<div id="bid-success-message" style="display:none;">Congratulations! Your bid has been placed successfully.</div>';
                 echo '</div>';
