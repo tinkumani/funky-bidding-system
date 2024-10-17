@@ -462,11 +462,11 @@ class Funky_Bidding_Shortcodes {
                                 data: formData + "&action=place_bid&nonce=" + funkyBidding.nonce,
                                 success: function(response) {
                                     if (response.success) {
-                                        $("#bid-success-message").text(response.message).show().delay(3000).fadeOut();
+                                        $("#bid-success-message").text(response.message).show().delay(6000).fadeOut();
                                         // Update the item"s values
                                         var $form = form;
-                                        if (response.item.max_bid != null) {
-                                            $form.find("max_bid").val("Max Price: $75.00" + parseFloat(response.item.max_bid).toFixed(2));
+                                        if (response.item.max_bid != null && parseFloat(response.item.max_bid) > 0) {
+                                            $form.find("#max_bid").val("Max Price: $" + parseFloat(response.item.max_bid).toFixed(2));
                                         }
                                         if (response.item.min_bid != null) {
                                             $form.find("#min_bid").val("Minimum Bid: $" + parseFloat(response.item.min_bid).toFixed(2));
@@ -479,11 +479,11 @@ class Funky_Bidding_Shortcodes {
                                         }
                                         $form.find("#highest-bidder").val(response.item.highest_bidder);
                                         // Update the suggested bid
-                                        if (response.item.current_bid != null && response.item.max_bid != null) {
-                                            var newSuggestedBid = Math.min(
-                                                parseFloat(response.item.max_bid),
-                                                parseFloat(response.item.current_bid) + parseFloat(response.item.bid_increment)
-                                            );
+                                        if (response.item.current_bid != null && response.item.bid_increment != null) {
+                                            var newSuggestedBid = parseFloat(response.item.current_bid) + parseFloat(response.item.bid_increment);
+                                            if (response.item.max_bid != null && parseFloat(response.item.max_bid) > 0) {
+                                                newSuggestedBid = Math.min(newSuggestedBid, parseFloat(response.item.max_bid));
+                                            }
                                             $form.find("#suggested_bid").val(newSuggestedBid.toFixed(2));
                                             $form.find("#bid_amount").attr("min", newSuggestedBid).val(newSuggestedBid);
                                         }
