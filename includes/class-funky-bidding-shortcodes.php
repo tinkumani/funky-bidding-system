@@ -466,16 +466,16 @@ class Funky_Bidding_Shortcodes {
                                         // Update the item"s values
                                         var $form = form;
                                         if (response.item.max_bid != null) {
-                                            $form.find("max_bid").val("$" + parseFloat(response.item.max_bid).toFixed(2));
+                                            $form.find("max_bid").val("Max Price: $75.00" + parseFloat(response.item.max_bid).toFixed(2));
                                         }
                                         if (response.item.min_bid != null) {
-                                            $form.find("#min_bid").val("$" + parseFloat(response.item.min_bid).toFixed(2));
+                                            $form.find("#min_bid").val("Minimum Bid: $" + parseFloat(response.item.min_bid).toFixed(2));
                                         }
                                         if (response.item.current_bid != null) {
-                                            $form.find("#current_price").val("$" + parseFloat(response.item.current_bid).toFixed(2));
+                                            $form.find("#current_price").val("Current Bid: $" + parseFloat(response.item.current_bid).toFixed(2));
                                         }
                                         if (response.item.bid_increment != null) {
-                                            $form.find("#next_increment").val("$" + parseFloat(response.item.bid_increment).toFixed(2));
+                                            $form.find("#next_increment").val("Bid Increment: $" + parseFloat(response.item.bid_increment).toFixed(2));
                                         }
                                         $form.find("#highest-bidder").val(response.item.highest_bidder);
                                         // Update the suggested bid
