@@ -398,21 +398,21 @@ class Funky_Bidding_Shortcodes {
             echo '</div>';
             echo '<div class="item-details" style="font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif; font-size: 12px; line-height: 1.4; background-color: #ccc;">';
             echo '<p class="item-description">' . esc_html(wp_trim_words($item->item_description, 20)) . '</p>';
+            $random_number = mt_rand(1000, 9999);
+            $form_class = 'bidding-form-' . esc_attr($item->id) . '-' . $random_number;
+            echo '<form method="POST" action="' . esc_url(admin_url('admin-post.php')) . '" class="bidding-form ' . $form_class . '">';
             echo '<div class="item-stats" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2px;">';
-            echo '<p style="margin: 2px;">Current Bid: $<span class="highest-bid" id="' . $current_price_ref . '">' . number_format($highest_bid, 2) . '</span></p>';
-            echo '<p style="margin: 2px;">Minimum Bid: $<span id="' . $min_bid_ref . '">' . esc_html($item->min_bid) . '</span></p>';
+            echo '<p style="margin: 2px;"><input type="text" value="Current Bid: $' . number_format($highest_bid, 2) . '" id="' . $current_price_ref . '" class="highest-bid" disabled style="border: none; background: none; font-weight: 400; width: 100%; font-family: -apple-system, system-ui, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif; font-size: 12px;"></p>';
+            echo '<p style="margin: 2px;"><input type="text" value="Minimum Bid: $' . esc_html($item->min_bid) . '" id="' . $min_bid_ref . '" disabled style="border: none; background: none; font-weight: 400; width: 100%; font-family: -apple-system, system-ui, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif; font-size: 12px;"></p>';
             if ($item->max_bid > 0) {
-                echo '<p>Max Price: $<span id="' . $max_bid_ref . '">' . esc_html($item->max_bid) . '</span></p>';
+                echo '<p><input type="text" value="Max Price: $' . esc_html($item->max_bid) . '" id="' . $max_bid_ref . '" disabled style="border: none; background: none; font-weight: 400; width: 100%; font-family: -apple-system, system-ui, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif; font-size: 12px;"></p>';
             }
-            echo '<p style="margin: 2px;">Bid Increment: $<span id="' . $next_increment_ref . '">' . esc_html($item->bid_increment) . '</span></p>';
-            echo '<p style="margin: 2px;">Total Bids: <span id="' . $bid_count_ref . '">' . $bid_count . '</span></p>';
+            echo '<p style="margin: 2px;"><input type="text" value="Bid Increment: $' . esc_html($item->bid_increment) . '" id="' . $next_increment_ref . '" disabled style="border: none; background: none; font-weight: 400; width: 100%; font-family: -apple-system, system-ui, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif; font-size: 12px;"></p>';
+            echo '<p style="margin: 2px;"><input type="text" value="Total Bids: ' . $bid_count . '" id="' . $bid_count_ref . '" disabled style="border: none; background: none; font-weight: 400; width: 100%; font-family: -apple-system, system-ui, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif; font-size: 12px;"></p>';
           
             if (!$is_sold) {
                 echo '<p class="time-left" style="margin: 2px;">Time Left: <span class="timer" data-end-time="' . esc_attr($end_time) . '"></span></p>';
                 echo '</div>';
-                $random_number = mt_rand(1000, 9999);
-                $form_class = 'bidding-form-' . esc_attr($item->id) . '-' . $random_number;
-                echo '<form method="POST" action="' . esc_url(admin_url('admin-post.php')) . '" class="bidding-form ' . $form_class . '">';
                 echo '<input type="hidden" name="action" value="place_bid">';
                 echo '<input type="hidden" name="item_id" value="' . esc_attr($item->id) . '">';
                 echo '<input type="hidden" name="redirect_anchor" value="item-' . esc_attr($item->id) . '">';
@@ -466,25 +466,25 @@ class Funky_Bidding_Shortcodes {
                                         // Update the item"s values
                                         var $form = form;
                                         if (response.item.max_bid != null) {
-                                            $form.find(".max_bid").text("$" + parseFloat(response.item.max_bid).toFixed(2));
+                                            $form.find("max_bid").val("$" + parseFloat(response.item.max_bid).toFixed(2));
                                         }
                                         if (response.item.min_bid != null) {
-                                            $form.find(".min_bid").text("$" + parseFloat(response.item.min_bid).toFixed(2));
+                                            $form.find("#min_bid").val("$" + parseFloat(response.item.min_bid).toFixed(2));
                                         }
                                         if (response.item.current_bid != null) {
-                                            $form.find(".current_price").text("$" + parseFloat(response.item.current_bid).toFixed(2));
+                                            $form.find("#current_price").val("$" + parseFloat(response.item.current_bid).toFixed(2));
                                         }
                                         if (response.item.bid_increment != null) {
-                                            $form.find(".next_increment").text("$" + parseFloat(response.item.bid_increment).toFixed(2));
+                                            $form.find("#next_increment").val("$" + parseFloat(response.item.bid_increment).toFixed(2));
                                         }
-                                        $form.find(".highest-bidder").text(response.item.highest_bidder);
+                                        $form.find("#highest-bidder").val(response.item.highest_bidder);
                                         // Update the suggested bid
                                         if (response.item.current_bid != null && response.item.max_bid != null) {
                                             var newSuggestedBid = Math.min(
                                                 parseFloat(response.item.max_bid),
                                                 parseFloat(response.item.current_bid) + parseFloat(response.item.bid_increment)
                                             );
-                                            $form.find("#suggested_bid").text(newSuggestedBid.toFixed(2));
+                                            $form.find("#suggested_bid").val(newSuggestedBid.toFixed(2));
                                             $form.find("#bid_amount").attr("min", newSuggestedBid).val(newSuggestedBid);
                                         }
                                     } else {
@@ -538,6 +538,7 @@ class Funky_Bidding_Shortcodes {
                     });
                 </script>';
             } else {
+                echo '</form>';
                 echo '<p class="sold-price">Sold for: $' . number_format($highest_bid, 2) . '</p>';
                 echo '</div>';
             }
