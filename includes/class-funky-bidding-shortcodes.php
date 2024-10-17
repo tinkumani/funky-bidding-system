@@ -450,14 +450,10 @@ class Funky_Bidding_Shortcodes {
                 }
                 echo '<input type="number" name="bid_amount" id="bid_amount" step="5" min="' . esc_attr($suggested_bid) . '" value="' . esc_attr($suggested_bid) . '" required>';
                 echo '</div>';
-                echo '<p id="bid_suggestion">Suggested bid: $<span id="suggested_bid">' . number_format($suggested_bid, 2) . '</span></p>';
-                echo '<button type="button" id="place-bid-button" class="funky-bidding-button ' . $form_class . '">Place Bid</button>';
-                echo '<div id="bid-success-message" style="display:none;">Congratulations! Your bid has been placed successfully.</div>';
                 echo '<script>
                     jQuery(document).ready(function($) {
-                        $("#place-bid-button").on("click", function(e) {
+                        $(".funky-bidding-button.' . $form_class . '").on("click", function(e) {
                             e.preventDefault();
-                            // Find the nearest form
                             var form = $(this).closest("form");
                             var formData = form.serialize();
                             $.ajax({
@@ -468,14 +464,15 @@ class Funky_Bidding_Shortcodes {
                                     if (response.success) {
                                         $("#bid-success-message").text(response.message).show().delay(3000).fadeOut();
                                         // Update the item"s max bid and other values
-                                        $("#max-bid-" + response.item_id).text("$" + response.max_bid.toFixed(2));
-                                        $("#current-price-" + response.item_id).text("$" + response.current_price.toFixed(2));
-                                        $("#bid-count-" + response.item_id).text(response.bid_count);
-                                        $("#highest-bidder-" + response.item_id).text(response.highest_bidder);
+                                        var $form = form;
+                                        $form.find(".max-bid").text("$" + response.max_bid.toFixed(2));
+                                        $form.find(".current-price").text("$" + response.current_price.toFixed(2));
+                                        $form.find(".bid-count").text(response.bid_count);
+                                        $form.find(".highest-bidder").text(response.highest_bidder);
                                         // Update the suggested bid
                                         var newSuggestedBid = Math.min(response.max_bid, response.current_price + response.bid_increment);
-                                        $("#suggested_bid").text(newSuggestedBid.toFixed(2));
-                                        $("#bid_amount").attr("min", newSuggestedBid).val(newSuggestedBid);
+                                        $form.find("#suggested_bid").text(newSuggestedBid.toFixed(2));
+                                        $form.find("#bid_amount").attr("min", newSuggestedBid).val(newSuggestedBid);
                                     } else {
                                         var errorMessage = response.message || "An unknown error occurred";
                                         alert("Error: " + errorMessage);
@@ -488,6 +485,9 @@ class Funky_Bidding_Shortcodes {
                         });
                     });
                 </script>';
+                echo '<p id="bid_suggestion">Suggested bid: $<span id="suggested_bid">' . number_format($suggested_bid, 2) . '</span></p>';
+                echo '<button type="button" class="funky-bidding-button ' . $form_class . '">Place Bid</button>';
+                echo '<div id="bid-success-message" style="display:none;">Congratulations! Your bid has been placed successfully.</div>';
                 echo '</div>';
                 echo '</form>';
                 echo '<script>
