@@ -373,11 +373,11 @@ class Funky_Bidding_Shortcodes {
 
             ob_start();
             $item_id = esc_attr($item->id);
-            $max_bid_ref = "max_bid_{$item_id}";
-            $min_bid_ref = "min_bid_{$item_id}";
-            $current_price_ref = "current_price_{$item_id}";
-            $next_increment_ref = "next_increment_{$item_id}";
-            $bid_count_ref = "bid_count_{$item_id}";
+            $max_bid_ref = "max_bid";
+            $min_bid_ref = "min_bid";
+            $current_price_ref = "current_price";
+            $next_increment_ref = "next_increment";
+            $bid_count_ref = "bid_count";
 
             echo '<div id="item-' . $item_id . '" class="funky-bidding-item' . ($is_sold ? ' sold' : '') . '">';
             echo '<h5 style="text-align: left; margin: 2px; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif;">';
@@ -463,16 +463,22 @@ class Funky_Bidding_Shortcodes {
                                 success: function(response) {
                                     if (response.success) {
                                         $("#bid-success-message").text(response.message).show().delay(3000).fadeOut();
-                                        // Update the item"s max bid and other values
+                                        // Update the item"s values
                                         var $form = form;
-                                        $form.find(".max-bid").text("$" + response.max_bid.toFixed(2));
-                                        $form.find(".current-price").text("$" + response.current_price.toFixed(2));
-                                        $form.find(".bid-count").text(response.bid_count);
-                                        $form.find(".highest-bidder").text(response.highest_bidder);
+                                        if (response.item.max_bid != null && response.item.max_bid !== 0) {
+                                            $form.find(".max-bid").text("$" + response.item.max_bid);
+                                        }
+                                        if (response.item.current_bid != null && response.item.current_bid !== 0) {
+                                            $form.find(".current-price").text("$" + response.item.current_bid.toFixed(2));
+                                        }
+                                        $form.find(".highest-bidder").text(response.item.highest_bidder);
                                         // Update the suggested bid
-                                        var newSuggestedBid = Math.min(response.max_bid, response.current_price + response.bid_increment);
-                                        $form.find("#suggested_bid").text(newSuggestedBid.toFixed(2));
-                                        $form.find("#bid_amount").attr("min", newSuggestedBid).val(newSuggestedBid);
+                                        if (response.item.current_bid != null && response.item.current_bid !== 0 && 
+                                            response.item.max_bid != null && response.item.max_bid !== 0) {
+                                            var newSuggestedBid = Math.min(parseFloat(response.item.max_bid), response.item.current_bid + parseFloat(response.item.bid_increment));
+                                            $form.find("#suggested_bid").text(newSuggestedBid.toFixed(2));
+                                            $form.find("#bid_amount").attr("min", newSuggestedBid).val(newSuggestedBid);
+                                        }
                                     } else {
                                         var errorMessage = response.message || "An unknown error occurred";
                                         alert("Error: " + errorMessage);
