@@ -8,8 +8,8 @@ class Funky_Bidding_Shortcodes {
         add_action('init', array($this, 'create_bidding_watchers_table'));
         add_action('wp_ajax_refresh_campaign_data', array($this, 'refresh_campaign_data'));
         add_action('wp_ajax_nopriv_refresh_campaign_data', array($this, 'refresh_campaign_data'));
-        add_action('admin_post_place_bid', array($this, 'handle_place_bid'));
-        add_action('admin_post_nopriv_place_bid', array($this, 'handle_place_bid'));
+        add_action('wp_ajax_place_bid', array($this, 'handle_place_bid'));
+        add_action('wp_ajax_nopriv_place_bid', array($this, 'handle_place_bid'));
         add_action('wp_ajax_watch_item', array($this, 'handle_watch_item'));
         add_action('wp_ajax_nopriv_watch_item', array($this, 'handle_watch_item'));
         add_action('wp_ajax_load_more_items', array($this, 'load_more_items'));
@@ -403,7 +403,9 @@ class Funky_Bidding_Shortcodes {
             if (!$is_sold) {
                 echo '<p class="time-left" style="margin: 2px;">Time Left: <span class="timer" data-end-time="' . esc_attr($end_time) . '"></span></p>';
                 echo '</div>';
-                echo '<form method="POST" action="' . esc_url(admin_url('admin-post.php')) . '" class="bidding-form">';
+                $random_number = mt_rand(1000, 9999);
+                $form_class = 'bidding-form-' . esc_attr($item->id) . '-' . $random_number;
+                echo '<form method="POST" action="' . esc_url(admin_url('admin-post.php')) . '" class="bidding-form ' . $form_class . '">';
                 echo '<input type="hidden" name="action" value="place_bid">';
                 echo '<input type="hidden" name="item_id" value="' . esc_attr($item->id) . '">';
                 echo '<input type="hidden" name="redirect_anchor" value="item-' . esc_attr($item->id) . '">';
@@ -442,14 +444,15 @@ class Funky_Bidding_Shortcodes {
                 echo '<input type="number" name="bid_amount" id="bid_amount" step="5" min="' . esc_attr($suggested_bid) . '" value="' . esc_attr($suggested_bid) . '" required>';
                 echo '</div>';
                 echo '<p id="bid_suggestion">Suggested bid: $<span id="suggested_bid">' . number_format($suggested_bid, 2) . '</span></p>';
-                echo '<br>';
-                echo '<button type="button" id="place-bid-button" class="funky-bidding-button">Place Bid</button>';
+                echo '<button type="button" id="place-bid-button" class="funky-bidding-button ' . $form_class . '">Place Bid</button>';
                 echo '<div id="bid-success-message" style="display:none;">Congratulations! Your bid has been placed successfully.</div>';
                 echo '<script>
                     jQuery(document).ready(function($) {
                         $("#place-bid-button").on("click", function(e) {
                             e.preventDefault();
-                            var formData = $(".bidding-form").serialize();
+                            // Find the nearest form
+                            var form = $(this).closest("form");
+                            var formData = form.serialize();
                             $.ajax({
                                 url: funkyBidding.ajaxurl,
                                 type: "POST",
