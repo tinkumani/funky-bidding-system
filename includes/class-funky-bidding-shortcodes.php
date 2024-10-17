@@ -443,8 +443,32 @@ class Funky_Bidding_Shortcodes {
                 echo '</div>';
                 echo '<p id="bid_suggestion">Suggested bid: $<span id="suggested_bid">' . number_format($suggested_bid, 2) . '</span></p>';
                 echo '<br>';
-                echo '&nbsp;';
-                echo '<input type="submit" value="Place Bid" class="funky-bidding-button">';
+                echo '<button type="button" id="place-bid-button" class="funky-bidding-button">Place Bid</button>';
+                echo '<div id="bid-success-message" style="display:none;">Congratulations! Your bid has been placed successfully.</div>';
+                echo '<script>
+                    jQuery(document).ready(function($) {
+                        $("#place-bid-button").on("click", function(e) {
+                            e.preventDefault();
+                            var formData = $(".bidding-form").serialize();
+                            $.ajax({
+                                url: funkyBidding.ajaxurl,
+                                type: "POST",
+                                data: formData + "&action=place_bid",
+                                success: function(response) {
+                                    if (response.success) {
+                                        $("#bid-success-message").show().delay(3000).fadeOut();
+                                        // Optionally, update the bid information here
+                                    } else {
+                                        alert("Error: " + response.data.message);
+                                    }
+                                },
+                                error: function() {
+                                    alert("An error occurred. Please try again.");
+                                }
+                            });
+                        });
+                    });
+                </script>';
                 echo '</div>';
                 echo '</form>';
                 echo '<script>
