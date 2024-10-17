@@ -453,7 +453,7 @@ class Funky_Bidding_Shortcodes {
                             $.ajax({
                                 url: funkyBidding.ajaxurl,
                                 type: "POST",
-                                data: formData + "&action=place_bid",
+                                data: formData + "&action=place_bid&nonce=" + funkyBidding.nonce,
                                 success: function(response) {
                                     if (response.success) {
                                         $("#bid-success-message").show().delay(3000).fadeOut();
