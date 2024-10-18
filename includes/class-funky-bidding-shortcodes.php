@@ -228,6 +228,7 @@ class Funky_Bidding_Shortcodes {
         echo '<div id="funky-bidding-items" class="funky-bidding-items"></div>';
         echo '<div id="funky-bidding-loader" class="funky-bidding-loader">Loading...</div>';
         echo '</div>';
+        echo '<div id="bid-result-dialog" title="Bid Result" style="display:none;"></div>';
 
         echo '<script>
         jQuery(document).ready(function($) {
@@ -341,6 +342,78 @@ class Funky_Bidding_Shortcodes {
             }
 
             setInterval(updateTimers, 1000);
+
+            $(document).on("click", ".funky-bidding-button", function(e) {
+                e.preventDefault();
+                var form = $(this).closest("form");
+                var formData = form.serialize();
+                var $button = $(this);
+                var $message = $("<div>").text("Placing Bid...").insertAfter($button);
+                $button.prop("disabled", true);
+                $.ajax({
+                    url: funkyBidding.ajaxurl,
+                    type: "POST",
+                    data: formData + "&action=place_bid&nonce=" + funkyBidding.nonce,
+                    success: function(response) {
+                        $message.remove();
+                        $button.prop("disabled", false);
+                        if (response.success) {
+                            var $dialog = $("#bid-result-dialog");
+                            $dialog.html("<p>" + response.message + "</p>");
+                            $dialog.dialog({
+                                modal: true,
+                                buttons: {
+                                    Ok: function() {
+                                        $(this).dialog("close");
+                                    }
+                                }
+                            });
+
+                            // Update the item"s values
+                            var $form = form;
+                            if (response.item.max_bid != null && parseFloat(response.item.max_bid) > 0) {
+                                $form.find("#max_bid").val("Max Price: $" + parseFloat(response.item.max_bid).toFixed(2));
+                            }
+                            if (response.item.min_bid != null) {
+                                $form.find("#min_bid").val("Minimum Bid: $" + parseFloat(response.item.min_bid).toFixed(2));
+                            }
+                            if (response.item.current_bid != null) {
+                                $form.find("#current_price").val("Current Bid: $" + parseFloat(response.item.current_bid).toFixed(2));
+                            }
+                            if (response.item.bid_increment != null) {
+                                $form.find("#next_increment").val("Bid Increment: $" + parseFloat(response.item.bid_increment).toFixed(2));
+                            }
+                            $form.find("#highest-bidder").val(response.item.highest_bidder);
+
+                            // Update the suggested bid
+                            if (response.item.current_bid != null && response.item.bid_increment != null) {
+                                var newSuggestedBid = parseFloat(response.item.current_bid) + parseFloat(response.item.bid_increment);
+                                if (response.item.max_bid != null && parseFloat(response.item.max_bid) > 0) {
+                                    newSuggestedBid = Math.min(newSuggestedBid, parseFloat(response.item.max_bid));
+                                }
+                                $form.find("#suggested_bid_label").val("Suggested Bid: $" + newSuggestedBid.toFixed(2));
+                                $form.find("#bid_amount").attr("min", newSuggestedBid).val(newSuggestedBid);
+                            }
+
+                            // If the item is won, disable it and mark as sold
+                            if (response.item.is_won) {
+                                var $item = $form.closest(".funky-bidding-item");
+                                $item.addClass("sold");
+                                $item.find("form").remove();
+                                $item.prepend("<div class=\'sold-banner\'>SOLD</div>");
+                            }
+                        } else {
+                            var errorMessage = response.message || "An unknown error occurred";
+                            alert("Error: " + errorMessage);
+                        }
+                    },
+                    error: function() {
+                        $message.remove();
+                        $button.prop("disabled", false);
+                        alert("An error occurred. Please try again.");
+                    }
+                });
+            });
         });
         </script>';
 
@@ -466,62 +539,6 @@ class Funky_Bidding_Shortcodes {
                 }
                 echo '<input type="number" name="bid_amount" id="bid_amount" step="5" min="' . esc_attr($suggested_bid) . '" value="' . esc_attr($suggested_bid) . '" required>';
                 echo '</div>';
-                echo '<script>
-                    jQuery(document).ready(function($) {
-                        $(".funky-bidding-button.' . $form_class . '").on("click", function(e) {
-                            e.preventDefault();
-                            var form = $(this).closest("form");
-                            var formData = form.serialize();
-                            var $button = $(this);
-                            var $message = $("<div>").text("Placing Bid...").insertAfter($button);
-                            $button.prop("disabled", true);
-                            $.ajax({
-                                url: funkyBidding.ajaxurl,
-                                type: "POST",
-                                data: formData + "&action=place_bid&nonce=" + funkyBidding.nonce,
-                                success: function(response) {
-                                    $message.remove();
-                                    $button.prop("disabled", false);
-                                    if (response.success) {
-                                        $("#bid-success-message").text(response.message).show().delay(6000).fadeOut();
-                                        // Update the item"s values
-                                        var $form = form;
-                                        if (response.item.max_bid != null && parseFloat(response.item.max_bid) > 0) {
-                                            $form.find("#max_bid").val("Max Price: $" + parseFloat(response.item.max_bid).toFixed(2));
-                                        }
-                                        if (response.item.min_bid != null) {
-                                            $form.find("#min_bid").val("Minimum Bid: $" + parseFloat(response.item.min_bid).toFixed(2));
-                                        }
-                                        if (response.item.current_bid != null) {
-                                            $form.find("#current_price").val("Current Bid: $" + parseFloat(response.item.current_bid).toFixed(2));
-                                        }
-                                        if (response.item.bid_increment != null) {
-                                            $form.find("#next_increment").val("Bid Increment: $" + parseFloat(response.item.bid_increment).toFixed(2));
-                                        }
-                                        $form.find("#highest-bidder").val(response.item.highest_bidder);
-                                        // Update the suggested bid
-                                        if (response.item.current_bid != null && response.item.bid_increment != null) {
-                                            var newSuggestedBid = parseFloat(response.item.current_bid) + parseFloat(response.item.bid_increment);
-                                            if (response.item.max_bid != null && parseFloat(response.item.max_bid) > 0) {
-                                                newSuggestedBid = Math.min(newSuggestedBid, parseFloat(response.item.max_bid));
-                                            }
-                                            $form.find("#suggested_bid_label").val("Suggested Bid: $" + newSuggestedBid.toFixed(2));
-                                            $form.find("#bid_amount").attr("min", newSuggestedBid).val(newSuggestedBid);
-                                        }
-                                    } else {
-                                        var errorMessage = response.message || "An unknown error occurred";
-                                        alert("Error: " + errorMessage);
-                                    }
-                                },
-                                error: function() {
-                                    $message.remove();
-                                    $button.prop("disabled", false);
-                                    alert("An error occurred. Please try again.");
-                                }
-                            });
-                        });
-                    });
-                </script>';
                 echo '<input type="text" name="suggested_bid_label" id="suggested_bid_label" value="Suggested Bid: $' . esc_attr($suggested_bid) . '" disabled style="border: none; background: none; font-weight: 400; width: 100%; font-family: -apple-system, system-ui, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif;font-size: 12px;height: 25px;padding-top: 0px;padding-bottom: 0px;padding-left: 0px;padding-right: 0px;">';
                 echo '<button type="button" class="funky-bidding-button ' . $form_class . '">Place Bid</button>';
                 echo '<div id="bid-success-message" style="display:none;">Congratulations! Your bid has been placed successfully.</div>';
