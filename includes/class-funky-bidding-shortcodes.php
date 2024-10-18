@@ -411,25 +411,13 @@ class Funky_Bidding_Shortcodes {
                                 $form.find("#suggested_bid_label").val("Suggested Bid: $" + newSuggestedBid.toFixed(2));
                                 $form.find("#bid_amount").attr("min", newSuggestedBid).val(newSuggestedBid);
                             }
-
-                            // If the item is won or sold, disable it and mark as sold
-                            $button = $(this);
                             if (response.item.is_won) {
                                 $("<div>").text("Congratulations! You have won the item...").insertAfter($button);
-                                $button.prop("disabled", true).css({
-                                    "background-color": "#cccccc",
-                                    "color": "#666666",
-                                    "cursor": "default"
-                                });
-                                $button.text("You Won!");    
-                            }
-                            if (response.item.is_sold) {
+                                $button.prop("disabled", true);
+                                $button.text("You Won!");
+                            }else if (response.item.is_sold) {
                                 $("<div>").text("Sorry! This item is already sold...").insertAfter($button);
-                                $button.prop("disabled", true).css({
-                                    "background-color": "#cccccc",
-                                    "color": "#666666",
-                                    "cursor": "default"
-                                });
+                                $button.prop("disabled", true);
                                 $button.text("Sold");
                             }
                         } else {
@@ -517,9 +505,7 @@ class Funky_Bidding_Shortcodes {
             echo '</div>';
             echo '<div class="item-details" style="font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif; font-size: 12px; line-height: 1.4; background-color: #ccc;">';
             echo '<p class="item-description">' . esc_html(wp_trim_words($item->item_description, 20)) . '</p>';
-            $random_number = mt_rand(1000, 9999);
-            $form_class = 'bidding-form-' . esc_attr($item->id) . '-' . $random_number;
-            echo '<form method="POST" action="' . esc_url(admin_url('admin-post.php')) . '" class="bidding-form ' . $form_class . '">';
+            echo '<form method="POST" action="' . esc_url(admin_url('admin-post.php')) . '" class="bidding-form ">';
             echo '<div class="item-stats" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2px;">';
             echo '<p style="margin: 2px;"><input type="text" value="Current Bid: $' . number_format($highest_bid, 2) . '" id="' . $current_price_ref . '" class="highest-bid" disabled style="border: none; background: none; font-weight: 400; width: 100%; font-family: -apple-system, system-ui, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif;font-size: 12px;height: 25px;padding-top: 0px;padding-bottom: 0px;padding-left: 0px;padding-right: 0px;">';
             echo '<p style="margin: 2px;"><input type="text" value="Minimum Bid: $' . esc_html($item->min_bid) . '" id="' . $min_bid_ref . '" disabled style="border: none; background: none; font-weight: 400; width: 100%; font-family: -apple-system, system-ui, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif;font-size: 12px;height: 25px;padding-top: 0px;padding-bottom: 0px;padding-left: 0px;padding-right: 0px;">';
@@ -560,39 +546,7 @@ class Funky_Bidding_Shortcodes {
                 echo '<div id="bid-success-message" style="display:none;">Congratulations! Your bid has been placed successfully.</div>';
                 echo '</div>';
                 echo '</form>';
-                echo '<script>
-                    jQuery(document).ready(function($) {
-                        $(".clear-user-info").on("click", function() {
-                            $(".stored-user-info").hide();
-                            $(".user-info-fields").show();
-                            document.cookie = "funky_bidding_user_info=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-                        });
-                        
-                        $(".bidding-form").on("submit", function(e) {
-                            e.preventDefault();
-                            var formData = $(this).serializeArray();
-                            var userInfo = {
-                                user_name: "",
-                                user_phone: ""
-                            };
-                            
-                            $.each(formData, function(i, field) {
-                                if (field.name === "user_name") {
-                                    userInfo.user_name = field.value;
-                                } else if (field.name === "user_phone") {
-                                    userInfo.user_phone = field.value;
-                                }
-                            });
-
-                            if (userInfo.user_name && userInfo.user_phone) {
-                                document.cookie = "funky_bidding_user_info=" + JSON.stringify(userInfo) + "; path=/; max-age=2592000; SameSite=Strict";
-                                $(this).unbind("submit").submit();
-                            } else {
-                                alert("Please fill in both name and phone number.");
-                            }
-                        });
-                    });
-                </script>';
+                
             } else {
                 echo '</form>';
                 echo '<p class="sold-price">Sold for: $' . number_format($highest_bid, 2) . '</p>';
