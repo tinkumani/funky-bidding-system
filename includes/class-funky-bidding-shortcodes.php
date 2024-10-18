@@ -413,11 +413,24 @@ class Funky_Bidding_Shortcodes {
                             }
 
                             // If the item is won or sold, disable it and mark as sold
-                            if (response.item.is_won || response.item.is_sold) {
-                                $button = $(this);
+                            $button = $(this);
+                            if (response.item.is_won) {
                                 $("<div>").text("Congratulations! You have won the item...").insertAfter($button);
-                                $button.prop("disabled", true);
+                                $button.prop("disabled", true).css({
+                                    "background-color": "#cccccc",
+                                    "color": "#666666",
+                                    "cursor": "default"
+                                });
                                 $button.text("You Won!");    
+                            }
+                            if (response.item.is_sold) {
+                                $("<div>").text("Sorry! This item is already sold...").insertAfter($button);
+                                $button.prop("disabled", true).css({
+                                    "background-color": "#cccccc",
+                                    "color": "#666666",
+                                    "cursor": "default"
+                                });
+                                $button.text("Sold");
                             }
                         } else {
                             var errorMessage = response.message || "An unknown error occurred";
@@ -613,6 +626,24 @@ class Funky_Bidding_Shortcodes {
             $user_name = sanitize_text_field($_POST['user_name']);
             $user_phone = sanitize_text_field($_POST['user_phone']);
             $bid_amount = floatval($_POST['bid_amount']);
+            $is_sold = $wpdb->get_var($wpdb->prepare(
+                "SELECT CASE 
+                    WHEN max_bid > 0 AND EXISTS (SELECT 1 FROM {$wpdb->prefix}bidding_bids WHERE item_id = %d AND bid_amount >= max_bid) THEN 1
+                    WHEN (SELECT end_date FROM {$wpdb->prefix}bidding_campaigns WHERE id = campaign_id) < NOW() THEN 1
+                    ELSE 0
+                END AS is_sold
+                FROM {$wpdb->prefix}bidding_items 
+                WHERE id = %d",
+                $item_id,
+                $item_id
+            ));
+            // Check if the item is already sold
+            if ($is_sold) {
+                $response['success'] = false;
+                $response['message'] = 'This item is already sold and not available for bidding.';
+                wp_send_json($response);
+                return;
+            }
 
             // Log the input values
             error_log("Input values: item_id=$item_id, user_name=$user_name, user_phone=$user_phone, bid_amount=$bid_amount");
@@ -655,7 +686,11 @@ class Funky_Bidding_Shortcodes {
                 if ($result !== false) {
                     $this->log_bidding_activity($item_id, $user_name, $user_phone, $bid_amount);
 
-                    if ($bid_amount == $item->max_bid) {
+                    $is_won = $bid_amount >= $item->max_bid && $item->max_bid > 0;
+                    
+                   
+
+                    if ($is_won) {
                         $response['success'] = true;
                         $response['message'] = "Congratulations! You've won the auction for {$item->item_name}!";
                     } else {
@@ -671,7 +706,9 @@ class Funky_Bidding_Shortcodes {
                         'bid_increment' => $item->bid_increment,
                         'max_bid' => $item->max_bid,
                         'current_bid' => $bid_amount,
-                        'highest_bidder' => $user_name
+                        'highest_bidder' => $user_name,
+                        'is_won' => $is_won,
+                        'is_sold' => $is_sold
                     );
 
                     // Notify watchers
@@ -907,6 +944,14 @@ function funky_bidding_inline_styles() {
     }
     .funky-bidding-button:hover {
         background-color: #0063b1;
+    }
+    .funky-bidding-button:disabled {
+        background-color: #cccccc;
+        color: #666666;
+        cursor: not-allowed;
+    }
+    .funky-bidding-button:disabled:hover {
+        background-color: #cccccc;
     }
     .funky-bidding-loader {
         text-align: center;
