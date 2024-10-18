@@ -239,6 +239,15 @@ class Funky_Bidding_Shortcodes {
             var $loader = $("#funky-bidding-loader");
             var hasMoreItems = true;
 
+            // Load user info from cookie
+            var userInfo = JSON.parse(getCookie("funky_bidding_user_info") || "{}");
+
+            function getCookie(name) {
+                var value = "; " + document.cookie;
+                var parts = value.split("; " + name + "=");
+                if (parts.length == 2) return parts.pop().split(";").shift();
+            }
+
             function loadItems() {
                 if (loading || !hasMoreItems) return;
                 loading = true;
@@ -350,6 +359,14 @@ class Funky_Bidding_Shortcodes {
                 var $button = $(this);
                 var $message = $("<div>").text("Placing Bid...").insertAfter($button);
                 $button.prop("disabled", true);
+
+                // Save user info to cookie
+                var newUserInfo = {
+                    user_name: form.find("input[name=\'user_name\']").val(),
+                    user_phone: form.find("input[name=\'user_phone\']").val()
+                };
+                document.cookie = "funky_bidding_user_info=" + JSON.stringify(newUserInfo) + "; path=/; max-age=31536000; SameSite=Strict";
+
                 $.ajax({
                     url: funkyBidding.ajaxurl,
                     type: "POST",
@@ -507,21 +524,7 @@ class Funky_Bidding_Shortcodes {
                 echo '<input type="hidden" name="redirect_anchor" value="item-' . esc_attr($item->id) . '">';
                 
                 $user_info = isset($_COOKIE['funky_bidding_user_info']) ? json_decode(stripslashes($_COOKIE['funky_bidding_user_info']), true) : null;
-                
-                if ($user_info) {
-                    echo '<div class="stored-user-info" style="background-color: #ccc;">';
-                    echo '<p>Temporary Login: </p>';
-                    echo '<p>' . esc_html($user_info['user_name'] ? 'UserName: ' . $user_info['user_name'] : 'Phone: ' . $user_info['user_phone']) . '</p>';
-                    echo '<button type="button" class="clear-user-info">Change User Info</button>';
-                    echo '<p class="user-info-disclaimer">(Your information is not shared with other users.)</p>';
-                    echo '</div>';
-                    echo '<div class="user-info-fields" style="display:none;">';
-                    echo '<input type="hidden" name="user_name" value="' . esc_attr($user_info['user_name']) . '">';
-                    echo '<input type="hidden" name="user_phone" value="' . esc_attr($user_info['user_phone']) . '">';
-                } else {
-                    echo '<div class="user-info-fields">';
-                }
-                
+                echo '<div class="user-info-fields">';
                 echo '<div class="funky-bidding-form">';
                 echo '<input type="text" name="user_name" id="user_name" placeholder="Name" value="' . esc_attr($user_info['user_name'] ?? '') . '" required>';
                 echo '</div>';
