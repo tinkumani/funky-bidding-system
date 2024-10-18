@@ -24,19 +24,10 @@
 .funky-bidding-form input[type="number"] {
     width: 70%;
     padding: 1px;
-    border: 1px solid #dddfe2;
+    border: 0px solid #dddfe2;
     border-radius: 4px;
     font-size: 12px;
-    color: #1c1e21;
-}
-
-.funky-bidding-form input[type="text"]:focus,
-.funky-bidding-form input[type="email"]:focus,
-.funky-bidding-form input[type="tel"]:focus,
-.funky-bidding-form input[type="number"]:focus {
-    border-color: #1877f2;
-    box-shadow: 0 0 0 2px #e7f3ff;
-    outline: none;
+    color: #000000;
 }
 
 .funky-bidding-form label {
