@@ -487,12 +487,12 @@ class Funky_Bidding_Shortcodes {
             $bid_count_ref = "bid_count";
 
             echo '<div id="item-' . esc_attr($item_id) . '" class="funky-bidding-item' . ($is_sold ? ' sold' : '') . '" style="background-color: #212121;">';
-            echo '<h5 class="funky-bidding-item-title" style="color: white;">';
+            echo '<p class="funky-bidding-item-title" style="color: white; font-size: 18px; font-weight: bold;">';
             if (!empty($item->item_id)) {
                 echo '<span class="funky-bidding-item-id" style="background-color: #212121;">' . esc_html($item->item_id) . '.</span>';
             }
             echo esc_html($item->item_name);
-            echo '</h5>';
+            echo '</p>';
             echo '<div class="funky-bidding-item-image-container" style="background-color: #212121; position: relative;">';
             if (!$is_sold) {
                 echo '<button class="watch-item" data-item-id="' . esc_attr($item_id) . '" style="position: absolute; top: 10px; right: 10px; background: none; border: none; cursor: pointer; z-index: 10;" title="Watch Item">';
