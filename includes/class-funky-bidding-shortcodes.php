@@ -415,7 +415,7 @@ class Funky_Bidding_Shortcodes {
                                 $("<div>").text("Congratulations! You have won the item...").insertAfter($button);
                                 $button.prop("disabled", true);
                                 $button.text("You Won!");
-                            }else if (response.item.is_sold) {
+                            }else if (response.item.is_sold != 0) {
                                 $("<div>").text("Sorry! This item is already sold...").insertAfter($button);
                                 $button.prop("disabled", true);
                                 $button.text("Sold");
