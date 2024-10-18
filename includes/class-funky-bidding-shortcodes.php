@@ -472,11 +472,16 @@ class Funky_Bidding_Shortcodes {
                             e.preventDefault();
                             var form = $(this).closest("form");
                             var formData = form.serialize();
+                            var $button = $(this);
+                            var $message = $("<div>").text("Placing Bid...").insertAfter($button);
+                            $button.prop("disabled", true);
                             $.ajax({
                                 url: funkyBidding.ajaxurl,
                                 type: "POST",
                                 data: formData + "&action=place_bid&nonce=" + funkyBidding.nonce,
                                 success: function(response) {
+                                    $message.remove();
+                                    $button.prop("disabled", false);
                                     if (response.success) {
                                         $("#bid-success-message").text(response.message).show().delay(6000).fadeOut();
                                         // Update the item"s values
@@ -509,6 +514,8 @@ class Funky_Bidding_Shortcodes {
                                     }
                                 },
                                 error: function() {
+                                    $message.remove();
+                                    $button.prop("disabled", false);
                                     alert("An error occurred. Please try again.");
                                 }
                             });
