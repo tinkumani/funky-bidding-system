@@ -274,12 +274,15 @@ class Funky_Bidding_Shortcodes {
             }
 
             function checkScroll() {
-                if ($container.height() + $container.scrollTop() >= $itemsContainer.height() - 200) {
+                var scrollPosition = $(window).scrollTop() + $(window).height();
+                var containerBottom = $container.offset().top + $container.height();
+                
+                if (scrollPosition > containerBottom - 200 && !loading && hasMoreItems) {
                     loadItems();
                 }
             }
 
-            $container.on("scroll", checkScroll);
+            $(window).on("scroll", checkScroll);
             $(window).on("resize", checkScroll);
 
             loadItems();
@@ -349,12 +352,25 @@ class Funky_Bidding_Shortcodes {
 
         $campaign_id = isset($_POST['campaign_id']) ? intval($_POST['campaign_id']) : 0;
         $page = isset($_POST['page']) ? intval($_POST['page']) : 1;
+        $items_per_page = 10; // You can adjust this number as needed
+        $offset = ($page - 1) * $items_per_page;
+
         global $wpdb;
         $items = $wpdb->get_results($wpdb->prepare(
-            "SELECT i.*, c.end_date FROM {$wpdb->prefix}bidding_items i 
+            "SELECT i.*, c.end_date, 
+            CASE 
+                WHEN i.max_bid > 0 AND EXISTS (SELECT 1 FROM {$wpdb->prefix}bidding_bids b WHERE b.item_id = i.id AND b.bid_amount >= i.max_bid) THEN 1
+                WHEN c.end_date < NOW() THEN 1
+                ELSE 0
+            END AS is_sold
+            FROM {$wpdb->prefix}bidding_items i 
             JOIN {$wpdb->prefix}bidding_campaigns c ON i.campaign_id = c.id 
-            WHERE i.campaign_id = %d",
-            $campaign_id
+            WHERE i.campaign_id = %d
+            ORDER BY is_sold ASC, i.item_id ASC
+            LIMIT %d OFFSET %d",
+            $campaign_id,
+            $items_per_page,
+            $offset
         ));
 
         $html_items = array();
