@@ -412,12 +412,12 @@ class Funky_Bidding_Shortcodes {
                                 $form.find("#bid_amount").attr("min", newSuggestedBid).val(newSuggestedBid);
                             }
 
-                            // If the item is won, disable it and mark as sold
-                            if (response.item.is_won) {
-                                var $item = $form.closest(".funky-bidding-item");
-                                $item.addClass("sold");
-                                $item.find("form").remove();
-                                $item.prepend("<div class=\'sold-banner\'>SOLD</div>");
+                            // If the item is won or sold, disable it and mark as sold
+                            if (response.item.is_won || response.item.is_sold) {
+                                $button = $(this);
+                                $("<div>").text("Congratulations! You have won the item...").insertAfter($button);
+                                $button.prop("disabled", true);
+                                $button.text("You Won!");    
                             }
                         } else {
                             var errorMessage = response.message || "An unknown error occurred";
