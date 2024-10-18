@@ -485,6 +485,19 @@ class Funky_Bidding_Shortcodes {
             $current_price_ref = "current_price";
             $next_increment_ref = "next_increment";
             $bid_count_ref = "bid_count";
+            // Add webkit-specific text color for Apple devices
+            echo '<style>
+                @media screen and (-webkit-min-device-pixel-ratio:0) {
+                    #item-' . esc_attr($item_id) . ' .funky-bidding-item-title,
+                    #item-' . esc_attr($item_id) . ' .funky-bidding-item-description,
+                    #item-' . esc_attr($item_id) . ' input[type="text"],
+                    #item-' . esc_attr($item_id) . ' .time-left,
+                    #item-' . esc_attr($item_id) . ' label {
+                        color: white !important;
+                        -webkit-text-fill-color: white !important;
+                    }
+                }
+            </style>';
 
             echo '<div id="item-' . esc_attr($item_id) . '" class="funky-bidding-item' . ($is_sold ? ' sold' : '') . '" style="background-color: #212121;">';
             echo '<h5 class="funky-bidding-item-title" style="color: white;">';
@@ -495,7 +508,7 @@ class Funky_Bidding_Shortcodes {
             echo '</h5>';
             echo '<div class="funky-bidding-item-image-container" style="background-color: #212121; position: relative;">';
             if (!$is_sold) {
-                echo '<button class="funky-bidding-watch-item" data-item-id="' . esc_attr($item_id) . '" style="position: absolute; top: 10px; right: 10px; background: none; border: none; cursor: pointer; z-index: 10;"><i class="fas fa-heart" style="color: white; font-size: 24px;"></i></button>';
+                echo '<button class="watch-item" data-item-id="' . esc_attr($item_id) . '" style="position: absolute; top: 10px; right: 10px; background: none; border: none; cursor: pointer; z-index: 10;"><i class="fas fa-heart" style="color: white; font-size: 24px;"></i></button>';
             }
             if ($item->item_image) {
                 echo '<img class="funky-bidding-item-image" src="' . esc_url($item->item_image) . '" alt="Item Image">';
