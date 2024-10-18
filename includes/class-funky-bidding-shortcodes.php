@@ -495,7 +495,72 @@ class Funky_Bidding_Shortcodes {
             echo '</h5>';
             echo '<div class="funky-bidding-item-image-container" style="background-color: #212121; position: relative;">';
             if (!$is_sold) {
-                echo '<button class="watch-item" data-item-id="' . esc_attr($item_id) . '" style="position: absolute; top: 10px; right: 10px; background: none; border: none; cursor: pointer; z-index: 10;"><i class="fas fa-heart" style="color: red; font-size: 24px;"></i></button>';
+                echo '<button class="watch-item" data-item-id="' . esc_attr($item_id) . '" style="position: absolute; top: 10px; right: 10px; background: none; border: none; cursor: pointer; z-index: 10;" title="Watch Item">';
+                echo '<div class="heart">';
+                echo '<div class="heart-piece-0"></div>';
+                echo '<div class="heart-piece-1"></div>';
+                echo '<div class="heart-piece-2"></div>';
+                echo '<div class="heart-piece-3"></div>';
+                echo '<div class="heart-piece-4"></div>';
+                echo '<div class="heart-piece-5"></div>';
+                echo '<div class="heart-piece-6"></div>';
+                echo '<div class="heart-piece-7"></div>';
+                echo '<div class="heart-piece-8"></div>';
+                echo '</div>';
+                echo '</button>';
+                echo '<style>
+                    .heart {
+                        width: 24px;
+                        height: 24px;
+                        background-color: red;
+                        position: relative;
+                        transform: rotate(45deg);
+                        animation: heartBeat 1.2s infinite;
+                    }
+                    .heart-piece-0 {
+                        width: 24px;
+                        height: 24px;
+                        background-color: red;
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                    }
+                    .heart-piece-1, .heart-piece-2 {
+                        width: 24px;
+                        height: 24px;
+                        background-color: red;
+                        border-radius: 50%;
+                        position: absolute;
+                    }
+                    .heart-piece-1 {
+                        top: -12px;
+                        left: 0;
+                    }
+                    .heart-piece-2 {
+                        top: 0;
+                        left: -12px;
+                    }
+                    .heart-piece-3, .heart-piece-4, .heart-piece-5, .heart-piece-6, .heart-piece-7, .heart-piece-8 {
+                        width: 8px;
+                        height: 8px;
+                        background-color: rgba(255,0,0,0.5);
+                        position: absolute;
+                        border-radius: 50%;
+                    }
+                    .heart-piece-3 { top: -4px; left: 4px; }
+                    .heart-piece-4 { top: 4px; left: -4px; }
+                    .heart-piece-5 { top: 4px; right: -4px; }
+                    .heart-piece-6 { bottom: -4px; left: 4px; }
+                    .heart-piece-7 { bottom: 4px; left: -4px; }
+                    .heart-piece-8 { bottom: 4px; right: -4px; }
+                    @keyframes heartBeat {
+                        0% { transform: rotate(45deg) scale(1); }
+                        14% { transform: rotate(45deg) scale(1.3); }
+                        28% { transform: rotate(45deg) scale(1); }
+                        42% { transform: rotate(45deg) scale(1.3); }
+                        70% { transform: rotate(45deg) scale(1); }
+                    }
+                </style>';
             }
             if ($item->item_image) {
                 echo '<img class="funky-bidding-item-image" src="' . esc_url($item->item_image) . '" alt="Item Image">';
