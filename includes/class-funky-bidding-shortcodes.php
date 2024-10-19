@@ -360,13 +360,20 @@ class Funky_Bidding_Shortcodes {
                 var $message = $("<div>").text("Placing Bid...").insertAfter($button);
                 $button.prop("disabled", true);
 
-                // Save user info to cookie
+                // Save user info to cookie and update all forms
                 var newUserInfo = {
                     user_name: form.find("input[name=\'user_name\']").val(),
                     user_phone: form.find("input[name=\'user_phone\']").val(),
                     user_email: form.find("input[name=\'user_email\']").val()
                 };
                 document.cookie = "funky_bidding_user_info=" + JSON.stringify(newUserInfo) + "; path=/; max-age=31536000; SameSite=Strict";
+                
+                // Loop through all forms and update user info fields
+                $(".funky-bidding-form").each(function() {
+                    $(this).find("input[name=\'user_name\']").val(newUserInfo.user_name);
+                    $(this).find("input[name=\'user_phone\']").val(newUserInfo.user_phone);
+                    $(this).find("input[name=\'user_email\']").val(newUserInfo.user_email);
+                });
 
                 $.ajax({
                     url: funkyBidding.ajaxurl,
