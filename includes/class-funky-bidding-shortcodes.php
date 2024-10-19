@@ -941,11 +941,11 @@ public function check_new_activity() {
                         
                         // Get the campaign's success email template
                         $campaign = $wpdb->get_row($wpdb->prepare(
-                            "SELECT success_email_template FROM {$wpdb->prefix}bidding_campaigns WHERE id = %d",
-                            $item->campaign_id
+                            "SELECT id, success_email_template FROM {$wpdb->prefix}bidding_campaigns WHERE id = (SELECT campaign_id FROM {$wpdb->prefix}bidding_items WHERE id = %d)",
+                            $item_id
                         ));
-                        
-                        if ($campaign && $campaign->success_email_template == "") {
+                        error_log("Campaign success email template: " . print_r($campaign->success_email_template, true));
+                        if ($campaign && $campaign->success_email_template != "") {
                             // Prepare email content
                             $email_content = $campaign->success_email_template;
                             $email_content = str_replace('{username}', $user_name, $email_content);
@@ -955,6 +955,8 @@ public function check_new_activity() {
                             $email_content = str_replace('{winning_bid}', number_format($bid_amount, 2), $email_content);
                             
                             // Send email to the winner
+                            error_log("Sending email to winner: " . $user_email);
+                            error_log("Email content: " . $email_content);
                             $subject = "Congratulations! You've won the auction for {$item->item_name}";
                             $headers = array('Content-Type: text/html; charset=UTF-8');
                             wp_mail($user_email, $subject, $email_content, $headers);
@@ -991,8 +993,11 @@ public function check_new_activity() {
 
                         foreach ($watchers as $watcher) {
                             $campaign = $wpdb->get_row($wpdb->prepare(
-                                "SELECT item_watchers_email_template FROM {$wpdb->prefix}bidding_campaigns WHERE id = %d",
-                                $item->campaign_id
+                                "SELECT c.id as campaign_id, c.item_watchers_email_template 
+                                FROM {$wpdb->prefix}bidding_campaigns c
+                                JOIN {$wpdb->prefix}bidding_items i ON c.id = i.campaign_id
+                                WHERE i.id = %d",
+                                $item_id
                             ));
 
                             if ($campaign && $campaign->item_watchers_email_template) {
@@ -1002,7 +1007,8 @@ public function check_new_activity() {
                                 
                                 $subject = "New bid placed on {$item->item_name}";
                                 $headers = array('Content-Type: text/html; charset=UTF-8');
-                                
+                                error_log("Sending email to watcher: " . $watcher->user_email);
+                                error_log("Email content: " . $email_content);
                                 wp_mail($watcher->user_email, $subject, $email_content, $headers);
                             } else {
 
