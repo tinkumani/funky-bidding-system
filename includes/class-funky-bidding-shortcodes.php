@@ -605,7 +605,7 @@ class Funky_Bidding_Shortcodes {
                 if ($item->max_bid > 0 && $suggested_bid > $item->max_bid) {
                     $suggested_bid = $item->max_bid;
                 }
-                echo '<input type="number" style="color:white;margin-bottom:0px;height:20px;" name="bid_amount" id="bid_amount" step="5" min="' . esc_attr($suggested_bid) . '" value="' . esc_attr($suggested_bid) . '" required>';
+                echo '<input type="number" style="color:black;margin-bottom:0px;height:20px;" name="bid_amount" id="bid_amount" step="5" min="' . esc_attr($suggested_bid) . '" value="' . esc_attr($suggested_bid) . '" required>';
                 echo '</div>';
                 echo '<input type="text" name="suggested_bid_label" id="suggested_bid_label" value="Suggested Bid: $' . esc_attr($suggested_bid) . '" disabled style="border: none;background: none;font-weight: 400;width: 100%;font-family: -apple-system, system-ui, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif;font-size: 12px;height: 25px;padding-top: 0px;padding-bottom: 0px;padding-left: 0px;padding-right: 0px;margin-bottom: 0px;color: white;font-size: 12px;">';
                 echo '<button type="button" class="funky-bidding-button ' . $form_class . '">Place Bid</button>';
