@@ -791,13 +791,30 @@ public function check_new_activity() {
                 if ($item->max_bid > 0 && $suggested_bid > $item->max_bid) {
                     $suggested_bid = $item->max_bid;
                 }
-                echo '<input type="number" style="color:black;margin-bottom:0px;height:20px;" name="bid_amount" id="bid_amount" step="5" min="' . esc_attr($suggested_bid) . '" value="' . esc_attr($suggested_bid) . '" required>';
+                echo '<input type="number" style="color:black;margin-bottom:0px;height:20px;" name="bid_amount" id="bid_amount" step="5" min="' . esc_attr($suggested_bid) . '" value="' . esc_attr($suggested_bid) . '" required oninput="this.value = Math.max(this.value, ' . esc_attr($suggested_bid) . ')">';
+                echo '<span class="tooltip" style="display:none;color:red;font-size:12px;">Bid must be at least $' . esc_attr($suggested_bid) . '</span>';
                 echo '</div>';
                 echo '<input type="text" name="suggested_bid_label" id="suggested_bid_label" value="Suggested Bid: $' . esc_attr($suggested_bid) . '" disabled style="border: none;background: none;font-weight: 400;width: 100%;font-family: -apple-system, system-ui, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif;font-size: 12px;height: 25px;padding-top: 0px;padding-bottom: 0px;padding-left: 0px;padding-right: 0px;margin-bottom: 0px;color: white;font-size: 12px;">';
-                echo '<button type="button" class="funky-bidding-button ' . $form_class . '">Place Bid</button>';
+                echo '<button type="button" class="funky-bidding-button ' . $form_class . '" onclick="validateBid()">Place Bid</button>';
                 echo '<div id="bid-success-message" style="display:none;">Congratulations! Your bid has been placed successfully.</div>';
                 echo '</div>';
                 echo '</form>';
+                
+                echo '<script>
+                function validateBid() {
+                    var bidAmount = parseFloat(document.getElementById("bid_amount").value);
+                    var suggestedBid = ' . $suggested_bid . ';
+                    var tooltip = document.querySelector(".tooltip");
+                    
+                    if (bidAmount < suggestedBid) {
+                        tooltip.style.display = "block";
+                        return false;
+                    } else {
+                        tooltip.style.display = "none";
+                        document.querySelector("form.funky-bidding-form").submit();
+                    }
+                }
+                </script>';
                 
             } else {
                 echo '</form>';
@@ -876,6 +893,55 @@ public function check_new_activity() {
             error_log("Highest bid: $highest_bid, Minimum next bid: $min_next_bid");
 
             if ($bid_amount >= $min_next_bid && ($item->max_bid == 0 || $bid_amount <= $item->max_bid)) {
+                // Start transaction
+                $wpdb->query('START TRANSACTION');
+
+                // Check if the item is not already sold
+                $is_sold = $wpdb->get_var($wpdb->prepare(
+                    "SELECT CASE 
+                        WHEN max_bid > 0 AND EXISTS (SELECT 1 FROM {$wpdb->prefix}bidding_bids WHERE item_id = %d AND bid_amount >= max_bid) THEN 1
+                        WHEN (SELECT end_date FROM {$wpdb->prefix}bidding_campaigns WHERE id = campaign_id) < NOW() THEN 1
+                        ELSE 0
+                    END AS is_sold
+                    FROM {$wpdb->prefix}bidding_items 
+                    WHERE id = %d
+                    FOR UPDATE",
+                    $item_id,
+                    $item_id
+                ));
+
+                if (!$is_sold) {
+                    // Item is not sold, proceed with insertion
+                    $result = $wpdb->insert(
+                        "{$wpdb->prefix}bidding_bids",
+                        array(
+                            'item_id' => $item_id,
+                            'user_name' => $user_name,
+                            'user_phone' => $user_phone,
+                            'user_email' => $user_email,
+                            'bid_amount' => $bid_amount,
+                            'bid_time' => current_time('mysql')
+                        )
+                    );
+
+                    if ($result === false) {
+                        $wpdb->query('ROLLBACK');
+                        $response['success'] = false;
+                        $response['message'] = 'Failed to place bid. Please try again.';
+                        wp_send_json($response);
+                        return;
+                    }
+                } else {
+                    // Item is already sold
+                    $wpdb->query('ROLLBACK');
+                    $response['success'] = false;
+                    $response['message'] = 'This item is already sold and not available for bidding.';
+                    wp_send_json($response);
+                    return;
+                }
+
+                // Commit the transaction
+                $wpdb->query('COMMIT');
                 $result = $wpdb->insert(
                     "{$wpdb->prefix}bidding_bids",
                     array(
