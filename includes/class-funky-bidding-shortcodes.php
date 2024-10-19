@@ -958,7 +958,7 @@ public function check_new_activity() {
                 error_log("Database insertion result: " . ($result !== false ? "Success" : "Failure"));
 
                 if ($result !== false) {
-                    $this->log_bidding_activity($item_id, $user_name, $user_phone, $bid_amount);
+                    $this->log_bidding_activity($item_id, $user_name, $user_phone,$user_email, $bid_amount);
 
                     $is_won = $bid_amount >= $item->max_bid && $item->max_bid > 0;
                     
@@ -1019,13 +1019,29 @@ public function check_new_activity() {
                         $message .= "Visit the auction page to place your bid!";
 
                         foreach ($watchers as $watcher) {
+                            $campaign = $wpdb->get_row($wpdb->prepare(
+                                "SELECT item_watchers_email_template FROM {$wpdb->prefix}bidding_campaigns WHERE id = %d",
+                                $item->campaign_id
+                            ));
+
+                            if ($campaign && $campaign->item_watchers_email_template) {
+                                $email_content = $campaign->item_watchers_email_template;
+                                $email_content = str_replace('{item_name}', $item->item_name, $email_content);
+                                $email_content = str_replace('{bid_amount}', number_format($bid_amount, 2), $email_content);
+                                
+                                $subject = "New bid placed on {$item->item_name}";
+                                $headers = array('Content-Type: text/html; charset=UTF-8');
+                                
+                                wp_mail($watcher->user_email, $subject, $email_content, $headers);
+                            } else {
+
                             wp_mail($watcher->user_email, $subject, $message);
+                            }
                         }
 
                         error_log("Notified " . count($watchers) . " watchers about new bid on item ID: $item_id");
                     }
 
-                    // Notify watchers (code omitted for brevity)
                 } else {
                     $response['message'] = "Error placing bid. Please contact the treasurer (treasurer@stthomastexas.org) for assistance.";
                 }
@@ -1054,7 +1070,7 @@ public function check_new_activity() {
         wp_send_json($response);
     }
 
-    private function log_bidding_activity($item_id, $user_name, $user_phone, $bid_amount) {
+    private function log_bidding_activity($item_id, $user_name, $user_phone,$user_email, $bid_amount) {
         global $wpdb;
         $browser = $_SERVER['HTTP_USER_AGENT'];
         $ip_address = $_SERVER['REMOTE_ADDR'];
