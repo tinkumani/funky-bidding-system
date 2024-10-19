@@ -114,6 +114,40 @@ class Funky_Bidding_Shortcodes {
             dbDelta($sql);
         }
     }
+public function check_new_activity() {
+        check_ajax_referer('funky_bidding_nonce', 'nonce');
+
+        global $wpdb;
+        $last_check_time = isset($_POST['last_check_time']) ? sanitize_text_field($_POST['last_check_time']) : '';
+
+        // Get new bids
+        $new_bids = $wpdb->get_results($wpdb->prepare(
+            "SELECT b.*, i.name as item_name 
+            FROM {$wpdb->prefix}bidding_bids b
+            JOIN {$wpdb->prefix}bidding_items i ON b.item_id = i.id
+            WHERE b.bid_time > %s
+            ORDER BY b.bid_time DESC",
+            $last_check_time
+        ));
+
+        // Get newly sold items
+        $sold_items = $wpdb->get_results($wpdb->prepare(
+            "SELECT i.*, b.bid_amount as sold_price, b.user_name as buyer
+            FROM {$wpdb->prefix}bidding_items i
+            JOIN {$wpdb->prefix}bidding_bids b ON i.id = b.item_id
+            WHERE i.status = 'sold' AND b.bid_time > %s
+            ORDER BY b.bid_time DESC",
+            $last_check_time
+        ));
+
+        $response = array(
+            'new_bids' => $new_bids,
+            'sold_items' => $sold_items,
+            'current_time' => current_time('mysql')
+        );
+
+        wp_send_json_success($response);
+    }
 
     public function create_bidding_watchers_table() {
         global $wpdb;
