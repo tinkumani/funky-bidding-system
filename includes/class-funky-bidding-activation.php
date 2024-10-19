@@ -79,6 +79,7 @@ class Funky_Bidding_Activation {
             item_id INT(11) NOT NULL,
             user_name VARCHAR(100) NOT NULL,
             user_phone VARCHAR(20) NOT NULL,
+            user_email VARCHAR(100) NOT NULL,
             bid_amount DECIMAL(10,2) NOT NULL,
             browser VARCHAR(255) NOT NULL,
             ip_address VARCHAR(45) NOT NULL,

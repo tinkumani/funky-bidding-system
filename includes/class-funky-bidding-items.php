@@ -88,7 +88,12 @@ class Funky_Bidding_Items {
             // End Date
             echo '<label for="end_date">End Date:</label><br>';
             echo '<input type="datetime-local" name="end_date" id="end_date" value="' . esc_attr(date('Y-m-d\TH:i', strtotime($campaign->end_date))) . '" required><br><br>';
-    
+            // Item Watchers Email Template
+            echo '<label for="item_watchers_email_template">Item Watchers Email Template:</label><br>';
+            echo '<textarea name="item_watchers_email_template" id="item_watchers_email_template" rows="4" cols="50">' . esc_textarea($campaign->item_watchers_email_template) . '</textarea><br><br>';
+            // Success Email Template
+            echo '<label for="success_email_template">Success Email Template:</label><br>';
+            echo '<textarea name="success_email_template" id="success_email_template" rows="4" cols="50">' . esc_textarea($campaign->success_email_template) . '</textarea><br><br>';
             // Sponsorship Image
             echo '<label for="sponsorship_image">Sponsorship Image:</label><br>';
             if ($campaign->sponsorship_image) {
@@ -111,8 +116,11 @@ class Funky_Bidding_Items {
         $campaign_id = intval($_POST['campaign_id']);
         $campaign_name = sanitize_text_field($_POST['campaign_name']);
         $campaign_description = sanitize_textarea_field($_POST['campaign_description']);
+        
         $start_date = sanitize_text_field($_POST['start_date']);
         $end_date = sanitize_text_field($_POST['end_date']);
+        $item_watchers_email_template = sanitize_textarea_field($_POST['item_watchers_email_template']);
+        $success_email_template = sanitize_textarea_field($_POST['success_email_template']);
 
         global $wpdb;
         $table_name = $wpdb->prefix . 'bidding_campaigns';
@@ -120,6 +128,8 @@ class Funky_Bidding_Items {
         $data = array(
             'name' => $campaign_name,
             'description' => $campaign_description,
+            'item_watchers_email_template' => $item_watchers_email_template,
+            'success_email_template' => $success_email_template,
             'start_date' => $start_date,
             'end_date' => $end_date,
         );
