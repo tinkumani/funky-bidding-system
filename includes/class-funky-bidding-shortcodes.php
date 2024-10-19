@@ -33,23 +33,23 @@ class Funky_Bidding_Shortcodes {
         ?>
         <script>
         jQuery(document).ready(function($) {
-            function getCSTTimeMinusFiveMinutes() {
+            function getTexasTimeMinusFiveMinutes() {
                 var now = new Date();
-                var cstOffset = -6; // CST is UTC-6
+                var texasOffset = -5; 
                 var utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-                var cstTime = new Date(utc + (3600000 * cstOffset));
-                cstTime.setMinutes(cstTime.getMinutes() - 5);
+                var texasTime = new Date(utc + (3600000 * texasOffset));
+                texasTime.setMinutes(texasTime.getMinutes() - 5);
                 
-                var year = cstTime.getFullYear();
-                var month = ('0' + (cstTime.getMonth() + 1)).slice(-2);
-                var day = ('0' + cstTime.getDate()).slice(-2);
-                var hours = ('0' + cstTime.getHours()).slice(-2);
-                var minutes = ('0' + cstTime.getMinutes()).slice(-2);
-                var seconds = ('0' + cstTime.getSeconds()).slice(-2);
+                var year = texasTime.getFullYear();
+                var month = ('0' + (texasTime.getMonth() + 1)).slice(-2);
+                var day = ('0' + texasTime.getDate()).slice(-2);
+                var hours = ('0' + texasTime.getHours()).slice(-2);
+                var minutes = ('0' + texasTime.getMinutes()).slice(-2);
+                var seconds = ('0' + texasTime.getSeconds()).slice(-2);
                 
                 return year + '-' + month + '-' + day + ' ' + hours + ':' + minutes + ':' + seconds;
             }
-            var lastCheckTime = getCSTTimeMinusFiveMinutes();
+            var lastCheckTime = getTexasTimeMinusFiveMinutes();
             function checkNewActivity() {
                 $.ajax({
                     url: funkyBiddingActivityCheck.ajaxurl,
@@ -87,8 +87,9 @@ class Funky_Bidding_Shortcodes {
                     .html('<i class="fas fa-bell"></i> ' + message)
                     .css({
                         'position': 'fixed',
-                        'bottom': '20px',
-                        'right': '-300px',
+                        'bottom': '-100px',
+                        'left': '50%',
+                        'transform': 'translateX(-50%)',
                         'width': '200px',
                         'background-color': '#f69772',
                         'color': '#fff',
@@ -100,12 +101,18 @@ class Funky_Bidding_Shortcodes {
                         'font-family': 'Arial, sans-serif',
                         'font-size': '16px',
                         'display': 'flex',
-                        'align-items': 'center'
+                        'align-items': 'center',
+                        'opacity': '0.5'
                     })
                     .appendTo('body')
-                    .animate({ right: '20px', bottom: '+=10px' }, 600, 'swing')
-                    .delay(4000)
-                    .animate({ right: '-300px', bottom: '-=10px' }, 600, 'swing', function() {
+                    .animate({
+                        bottom: '50%',
+                        opacity: 1
+                    }, 1000, 'swing')
+                    .delay(3000)
+                    .animate({
+                        opacity: 0
+                    }, 1000, 'swing', function() {
                         $(this).remove();
                     });
 
