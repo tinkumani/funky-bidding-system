@@ -25,61 +25,74 @@ class Funky_Bidding_Shortcodes {
         wp_enqueue_script('funky-bidding-activity-check', plugin_dir_url(__FILE__) . '../assets/js/funky-bidding-activity-check.js', array('jquery'), '1.0', true);
         wp_localize_script('funky-bidding-activity-check', 'funkyBiddingActivityCheck', array(
             'ajaxurl' => admin_url('admin-ajax.php'),
-            'nonce' => wp_create_nonce('funky_bidding_activity_nonce')
+            'nonce' => wp_create_nonce('funkyBiddingLiveFeed')
         ));
+
 
         ?>
         <script>
         jQuery(document).ready(function($) {
             var lastCheckTime = new Date().getTime();
-
             function checkNewActivity() {
                 $.ajax({
                     url: funkyBiddingActivityCheck.ajaxurl,
                     type: 'POST',
                     data: {
                         action: 'check_new_activity',
-                        nonce: funkyBiddingActivityCheck.nonce,
-                        last_check_time: lastCheckTime
+                        last_check_time: lastCheckTime,
+                        nonce: funkyBiddingActivityCheck.nonce
                     },
                     success: function(response) {
-                        if (response.success && response.data.length > 0) {
-                            response.data.forEach(function(item) {
-                                showActivityPopup(item);
-                            });
-                            lastCheckTime = new Date().getTime();
+                        if (response.success) {
+                            var data = response.data;
+                            lastCheckTime = data.current_time;
+
+                            // Handle new bids
+                            if (data.new_bids.length > 0) {
+                                data.new_bids.forEach(function(bid) {
+                                    showNotification('New bid: $' + bid.bid_amount + ' on ' + bid.item_name);
+                                });
+                            }
+
+                            // Handle sold items
+                            if (data.sold_items.length > 0) {
+                                data.sold_items.forEach(function(item) {
+                                    showNotification(item.name + ' sold for $' + item.sold_price + ' to ' + item.buyer);
+                                });
+                            }
                         }
                     }
                 });
             }
 
-            function showActivityPopup(item) {
-                var popup = $('<div class="funky-bidding-activity-popup">' +
-                    '<img src="' + item.image_url + '" alt="' + item.name + '">' +
-                    '<p>Item ID: ' + item.id + '</p>' +
-                    '<p>Name: ' + item.name + '</p>' +
-                    '<p>Status: ' + (item.sold ? 'Sold' : 'New Bid') + '</p>' +
-                    '</div>');
-
-                $('body').append(popup);
-
-                popup.css({
-                    'position': 'fixed',
-                    'right': '-300px',
-                    'top': '50%',
-                    'transform': 'translateY(-50%)',
-                    'width': '250px',
-                    'background-color': '#fff',
-                    'border': '1px solid #ccc',
-                    'padding': '10px',
-                    'box-shadow': '0 0 10px rgba(0,0,0,0.1)',
-                    'z-index': '9999'
-                }).animate({
-                    right: '20px'
-                }, 500).delay(3000).fadeOut(1000, function() {
-                    $(this).remove();
-                });
+            function showNotification(message) {
+                $('<div class="funky-bidding-notification">')
+                    .text(message)
+                    .css({
+                        'position': 'fixed',
+                        'bottom': '20px',
+                        'right': '-300px',
+                        'width': '250px',
+                        'background-color': '#fff',
+                        'border': '1px solid #ccc',
+                        'padding': '10px',
+                        'box-shadow': '0 0 10px rgba(0,0,0,0.1)',
+                        'z-index': '9999'
+                    })
+                    .appendTo('body')
+                    .animate({ right: '20px' }, 500)
+                    .delay(3000)
+                    .fadeOut(1000, function() {
+                        $(this).remove();
+                    });
             }
+
+            setInterval(checkNewActivity, 5000);
+        });
+        jQuery(document).ready(function($) {
+            var lastCheckTime = '<?php echo current_time('mysql'); ?>';
+
+            
 
             setInterval(checkNewActivity, 5000);
         });
@@ -115,39 +128,43 @@ class Funky_Bidding_Shortcodes {
         }
     }
 public function check_new_activity() {
-        check_ajax_referer('funky_bidding_nonce', 'nonce');
-
-        global $wpdb;
-        $last_check_time = isset($_POST['last_check_time']) ? sanitize_text_field($_POST['last_check_time']) : '';
-
-        // Get new bids
-        $new_bids = $wpdb->get_results($wpdb->prepare(
-            "SELECT b.*, i.name as item_name 
-            FROM {$wpdb->prefix}bidding_bids b
-            JOIN {$wpdb->prefix}bidding_items i ON b.item_id = i.id
-            WHERE b.bid_time > %s
-            ORDER BY b.bid_time DESC",
-            $last_check_time
-        ));
-
-        // Get newly sold items
-        $sold_items = $wpdb->get_results($wpdb->prepare(
-            "SELECT i.*, b.bid_amount as sold_price, b.user_name as buyer
-            FROM {$wpdb->prefix}bidding_items i
-            JOIN {$wpdb->prefix}bidding_bids b ON i.id = b.item_id
-            WHERE i.status = 'sold' AND b.bid_time > %s
-            ORDER BY b.bid_time DESC",
-            $last_check_time
-        ));
-
-        $response = array(
-            'new_bids' => $new_bids,
-            'sold_items' => $sold_items,
-            'current_time' => current_time('mysql')
-        );
-
-        wp_send_json_success($response);
+    // Verify the nonce
+    if (!check_ajax_referer('funkyBiddingLiveFeed', 'nonce', false)) {
+        wp_send_json_error('Invalid nonce');
+        return;
     }
+
+    global $wpdb;
+    $last_check_time = isset($_POST['last_check_time']) ? sanitize_text_field($_POST['last_check_time']) : '';
+
+    // Get new bids
+    $new_bids = $wpdb->get_results($wpdb->prepare(
+        "SELECT b.*, i.name as item_name 
+        FROM {$wpdb->prefix}bidding_bids b
+        JOIN {$wpdb->prefix}bidding_items i ON b.item_id = i.id
+        WHERE b.bid_time > %s
+        ORDER BY b.bid_time DESC",
+        $last_check_time
+    ));
+
+    // Get newly sold items
+    $sold_items = $wpdb->get_results($wpdb->prepare(
+        "SELECT i.*, b.bid_amount as sold_price, b.user_name as buyer
+        FROM {$wpdb->prefix}bidding_items i
+        JOIN {$wpdb->prefix}bidding_bids b ON i.id = b.item_id
+        WHERE i.status = 'sold' AND b.bid_time > %s
+        ORDER BY b.bid_time DESC",
+        $last_check_time
+    ));
+
+    $response = array(
+        'new_bids' => $new_bids,
+        'sold_items' => $sold_items,
+        'current_time' => current_time('mysql')
+    );
+
+    wp_send_json_success($response);
+}
 
     public function create_bidding_watchers_table() {
         global $wpdb;
