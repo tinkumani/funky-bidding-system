@@ -130,7 +130,7 @@ class Funky_Bidding_Shortcodes {
                     });
             }
 
-            setInterval(checkNewActivity, 1000);
+            setInterval(checkNewActivity, 10000);
         });
         </script>
         <?php
@@ -795,27 +795,10 @@ public function check_new_activity() {
                 echo '<span class="tooltip" style="display:none;color:red;font-size:12px;">Bid must be at least $' . esc_attr($suggested_bid) . '</span>';
                 echo '</div>';
                 echo '<input type="text" name="suggested_bid_label" id="suggested_bid_label" value="Suggested Bid: $' . esc_attr($suggested_bid) . '" disabled style="border: none;background: none;font-weight: 400;width: 100%;font-family: -apple-system, system-ui, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif;font-size: 12px;height: 25px;padding-top: 0px;padding-bottom: 0px;padding-left: 0px;padding-right: 0px;margin-bottom: 0px;color: white;font-size: 12px;">';
-                echo '<button type="button" class="funky-bidding-button ' . $form_class . '" onclick="validateBid()">Place Bid</button>';
+                echo '<button type="button" class="funky-bidding-button ' . $form_class . '"">Place Bid</button>';
                 echo '<div id="bid-success-message" style="display:none;">Congratulations! Your bid has been placed successfully.</div>';
                 echo '</div>';
                 echo '</form>';
-                
-                echo '<script>
-                function validateBid() {
-                    var bidAmount = parseFloat(document.getElementById("bid_amount").value);
-                    var suggestedBid = ' . $suggested_bid . ';
-                    var tooltip = document.querySelector(".tooltip");
-                    
-                    if (bidAmount < suggestedBid) {
-                        tooltip.style.display = "block";
-                        return false;
-                    } else {
-                        tooltip.style.display = "none";
-                        document.querySelector("form.funky-bidding-form").submit();
-                    }
-                }
-                </script>';
-                
             } else {
                 echo '</form>';
                 echo '<p class="sold-price">Sold for: $' . number_format($highest_bid, 2) . '</p>';
@@ -942,18 +925,6 @@ public function check_new_activity() {
 
                 // Commit the transaction
                 $wpdb->query('COMMIT');
-                $result = $wpdb->insert(
-                    "{$wpdb->prefix}bidding_bids",
-                    array(
-                        'item_id' => $item_id,
-                        'user_name' => $user_name,
-                        'user_phone' => $user_phone,
-                        'user_email' => $user_email,
-                        'bid_amount' => $bid_amount,
-                        'bid_time' => current_time('mysql')
-                    )
-                );
-
                 // Log the database insertion result
                 error_log("Database insertion result: " . ($result !== false ? "Success" : "Failure"));
 
