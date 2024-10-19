@@ -38,7 +38,7 @@ class Funky_Bidding_Shortcodes {
             $charset_collate = $wpdb->get_charset_collate();
             $sql = "CREATE TABLE $table_name (
                 user_email VARCHAR(100) NOT NULL PRIMARY KEY,
-                user_phone VARCHAR(20) NOT NULL
+                user_phone VARCHAR(20)
             ) $charset_collate;";
             
             require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
@@ -355,6 +355,14 @@ class Funky_Bidding_Shortcodes {
             $(document).on("click", ".funky-bidding-button", function(e) {
                 e.preventDefault();
                 var form = $(this).closest("form");
+                var userName = form.find("input[name=\'user_name\']").val();
+                var userEmail = form.find("input[name=\'user_email\']").val();
+                
+                if (!userName || !userEmail) {
+                    alert("Please enter your name and email before placing a bid.");
+                    return;
+                }
+                
                 var formData = form.serialize();
                 var $button = $(this);
                 var $message = $("<div>").text("Placing Bid...").insertAfter($button);
@@ -362,9 +370,9 @@ class Funky_Bidding_Shortcodes {
 
                 // Save user info to cookie and update all forms
                 var newUserInfo = {
-                    user_name: form.find("input[name=\'user_name\']").val(),
+                    user_name: userName,
                     user_phone: form.find("input[name=\'user_phone\']").val(),
-                    user_email: form.find("input[name=\'user_email\']").val()
+                    user_email: userEmail
                 };
                 document.cookie = "funky_bidding_user_info=" + JSON.stringify(newUserInfo) + "; path=/; max-age=31536000; SameSite=Strict";
                 
