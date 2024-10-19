@@ -39,9 +39,9 @@ class Funky_Bidding_Campaigns {
         echo '<div class="wrap">';
         echo '<h1>Bidding Campaigns</h1>';
         echo '<table class="widefat fixed">';
-        echo '<thead><tr><th>ID</th><th>Name</th><th>Start Date</th><th>End Date</th></tr></thead><tbody>';
+        echo '<thead><tr><th>ID</th><th>Name</th><th>Description</th><th>Sponsorship Image</th><th>Success Email Template</th><th>Item Watchers Email Template</th><th>Start Date</th><th>End Date</th></tr></thead><tbody>';
         foreach ($campaigns as $campaign) {
-            echo "<tr><td>{$campaign->id}</td><td>{$campaign->name}</td><td>{$campaign->start_date}</td><td>{$campaign->end_date}</td></tr>";
+            echo "<tr><td>{$campaign->id}</td><td>{$campaign->name}</td><td>{$campaign->description}</td><td>{$campaign->sponsorship_image}</td><td>{$campaign->success_email_template}</td><td>{$campaign->item_watchers_email_template}</td><td>{$campaign->start_date}</td><td>{$campaign->end_date}</td></tr>";
         }
         echo '</tbody></table>';
         echo '</div>';
@@ -70,6 +70,14 @@ class Funky_Bidding_Campaigns {
         echo '<label for="end_date">End Date:</label><br>';
         echo '<input type="datetime-local" name="end_date" id="end_date" required><br><br>';
 
+        // Success Email Template
+        echo '<label for="success_email_template">Success Email Template:</label><br>';
+        echo '<textarea name="success_email_template" id="success_email_template"></textarea><br><br>';
+
+        // Item Watchers Email Template
+        echo '<label for="item_watchers_email_template">Item Watchers Email Template:</label><br>';
+        echo '<textarea name="item_watchers_email_template" id="item_watchers_email_template"></textarea><br><br>';
+
         // Sponsorship Image Upload
         echo '<label for="sponsorship_image">Sponsorship Image (optional):</label><br>';
         echo '<input type="file" name="sponsorship_image" id="sponsorship_image" accept="image/*"><br><br>';
@@ -81,11 +89,13 @@ class Funky_Bidding_Campaigns {
 
     // Handle campaign submission
     public function handle_add_campaign() {
-        if (isset($_POST['campaign_name'], $_POST['description'], $_POST['start_date'], $_POST['end_date'])) {
+        if (isset($_POST['campaign_name'], $_POST['description'], $_POST['success_email_template'], $_POST['start_date'], $_POST['end_date'])) {
             global $wpdb;
 
             $campaign_name = sanitize_text_field($_POST['campaign_name']);
             $description = sanitize_textarea_field($_POST['description']);
+            $success_email_template = sanitize_textarea_field($_POST['success_email_template']);
+            $item_watchers_email_template = sanitize_textarea_field($_POST['item_watchers_email_template']);
             $start_date = sanitize_text_field($_POST['start_date']);
             $end_date = sanitize_text_field($_POST['end_date']);
             $sponsorship_image = '';
@@ -106,6 +116,8 @@ class Funky_Bidding_Campaigns {
                     'description' => $description,
                     'start_date' => $start_date,
                     'end_date' => $end_date,
+                    'success_email_template' => $success_email_template,
+                    'item_watchers_email_template' => $item_watchers_email_template,
                     'sponsorship_image' => $sponsorship_image
                 )
             );
@@ -128,6 +140,8 @@ class Funky_Bidding_Campaigns {
                     'description' => $description,
                     'start_date' => $start_date,
                     'end_date' => $end_date,
+                    'success_email_template' => $success_email_template,
+                    'item_watchers_email_template' => $item_watchers_email_template,
                     'sponsorship_image' => $sponsorship_image,
                     'browser' => $browser,
                     'ip_address' => $ip_address,
@@ -183,6 +197,8 @@ class Funky_Bidding_Campaigns {
             echo '<th>Campaign Name</th>';
             echo '<th>Start Date</th>';
             echo '<th>End Date</th>';
+            echo '<th>Success Email Template</th>';
+            echo '<th>Item Watchers Email Template</th>';
             echo '<th>Total Items</th>';
             echo '<th>Items Sold</th>';
             echo '<th>Funds Collected</th>';
@@ -199,9 +215,11 @@ class Funky_Bidding_Campaigns {
                 echo '<td>' . esc_html($campaign->name) . '</td>';
                 echo '<td>' . esc_html($campaign->start_date) . '</td>';
                 echo '<td>' . esc_html($campaign->end_date) . '</td>';
+                echo '<td>' . esc_html($campaign->success_email_template) . '</td>';
+                echo '<td>' . esc_html($campaign->item_watchers_email_template) . '</td>';
                 echo '<td>' . esc_html($campaign->total_items) . '</td>';
                 echo '<td><a href="#" onclick="showItemDetails(' . esc_js($campaign->id) . ')">' . esc_html($campaign->items_sold) . '</a></td>';
-                echo '<td>$' . number_format($campaign->funds_collected, 2) . '</td>';
+                echo '<td>' . esc_html($campaign->funds_collected) . '</td>';
                 echo '<td>' . esc_html($status) . '</td>';
                 echo '</tr>';
             }

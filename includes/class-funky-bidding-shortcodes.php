@@ -967,6 +967,27 @@ public function check_new_activity() {
                     if ($is_won) {
                         $response['success'] = true;
                         $response['message'] = "Congratulations! You've won the auction for {$item->item_name}!";
+                        
+                        // Get the campaign's success email template
+                        $campaign = $wpdb->get_row($wpdb->prepare(
+                            "SELECT success_email_template FROM {$wpdb->prefix}bidding_campaigns WHERE id = %d",
+                            $item->campaign_id
+                        ));
+                        
+                        if ($campaign && $campaign->success_email_template == "") {
+                            // Prepare email content
+                            $email_content = $campaign->success_email_template;
+                            $email_content = str_replace('{username}', $user_name, $email_content);
+                            $email_content = str_replace('{item_name}', $item->item_name, $email_content);
+                            $email_content = str_replace('{min_bid}', number_format($item->min_bid, 2), $email_content);
+                            $email_content = str_replace('{max_bid}', number_format($item->max_bid, 2), $email_content);
+                            $email_content = str_replace('{winning_bid}', number_format($bid_amount, 2), $email_content);
+                            
+                            // Send email to the winner
+                            $subject = "Congratulations! You've won the auction for {$item->item_name}";
+                            $headers = array('Content-Type: text/html; charset=UTF-8');
+                            wp_mail($user_email, $subject, $email_content, $headers);
+                        }
                     } else {
                         $response['success'] = true;
                         $response['message'] = "Your bid of $" . number_format($bid_amount, 2) . " for {$item->item_name} has been placed successfully.";

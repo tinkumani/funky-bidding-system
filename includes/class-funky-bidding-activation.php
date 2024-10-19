@@ -42,6 +42,8 @@ class Funky_Bidding_Activation {
             name VARCHAR(255) NOT NULL,
             description TEXT,
             sponsorship_image VARCHAR(255),
+            success_email_template TEXT,
+            item_watchers_email_template TEXT,
             start_date DATETIME NOT NULL,
             end_date DATETIME NOT NULL,
             PRIMARY KEY (id)
