@@ -570,16 +570,16 @@ class Funky_Bidding_Shortcodes {
             }
             echo '</div>';
             echo '<div class="funky-bidding-item-details" style="background-color: #212121;">';
-            echo '<p class="funky-bidding-item-description" style="background-color: #212121;">' . esc_html(wp_trim_words($item->item_description, 20)) . '</p>';
+            echo '<p class="funky-bidding-item-description" style="background-color: #212121; margin: 0px;">' . esc_html(wp_trim_words($item->item_description, 20)) . '</p>';
             echo '<form method="POST" action="' . esc_url(admin_url('admin-post.php')) . '" class="funky-bidding-form" style="background-color: #212121;">';
-            echo '<div class="funky-bidding-item-stats" style="background-color: #212121; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">';
-            echo '<input type="text" value="Current Bid: $' . number_format($highest_bid, 2) . '" id="' . esc_attr($current_price_ref) . '" class="funky-bidding-highest-bid" disabled style="background-color: #212121;color: white;border-color: black;border-width: 0px;width: 125px;padding-left: 0px;padding-top: 0px;padding-right: 0px;padding-bottom: 0px;margin-bottom: 0px;height: 40px;">';
-            echo '<input type="text" value="Minimum Bid: $' . esc_html($item->min_bid) . '" id="' . esc_attr($min_bid_ref) . '" class="funky-bidding-highest-bid" disabled style="background-color: #212121;color: white;border-color: black;border-width: 0px;width: 125px;padding-left: 0px;padding-top: 0px;padding-right: 0px;padding-bottom: 0px;margin-bottom: 0px;height: 40px;">';
+            echo '<div class="funky-bidding-item-stats" style="background-color: #212121; display: grid; grid-template-columns: 1fr 1fr; gap: 1px;">';
+            echo '<input type="text" value="Current Bid: $' . number_format($highest_bid, 2) . '" id="' . esc_attr($current_price_ref) . '" class="funky-bidding-highest-bid" disabled style="background-color: #212121;color: white;border-color: black;border-width: 0px;width: 125px;padding-left: 0px;padding-top: 0px;padding-right: 0px;padding-bottom: 0px;margin-bottom: 0px;height: 20px;">';
+            echo '<input type="text" value="Minimum Bid: $' . esc_html($item->min_bid) . '" id="' . esc_attr($min_bid_ref) . '" class="funky-bidding-highest-bid" disabled style="background-color: #212121;color: white;border-color: black;border-width: 0px;width: 125px;padding-left: 0px;padding-top: 0px;padding-right: 0px;padding-bottom: 0px;margin-bottom: 0px;height: 20px;">';
             if ($item->max_bid > 0) {
-                echo '<input type="text" value="Max Price: $' . esc_html($item->max_bid) . '" id="' . esc_attr($max_bid_ref) . '" class="funky-bidding-highest-bid" disabled style="background-color: #212121;color: white;border-color: black;border-width: 0px;width: 125px;padding-left: 0px;padding-top: 0px;padding-right: 0px;padding-bottom: 0px;margin-bottom: 0px;height: 40px;">';
+                echo '<input type="text" value="Max Price: $' . esc_html($item->max_bid) . '" id="' . esc_attr($max_bid_ref) . '" class="funky-bidding-highest-bid" disabled style="background-color: #212121;color: white;border-color: black;border-width: 0px;width: 125px;padding-left: 0px;padding-top: 0px;padding-right: 0px;padding-bottom: 0px;margin-bottom: 0px;height: 20px;">';
             }
-            echo '<input type="text" value="Bid Increment: $' . esc_html($item->bid_increment) . '" id="' . esc_attr($next_increment_ref) . '" disabled style="background-color: #212121;color: white;border-color: black;border-width: 0px;width: 125px;padding-left: 0px;padding-top: 0px;padding-right: 0px;padding-bottom: 0px;margin-bottom: 0px;height: 40px;">';
-            echo '<input type="text" value="Total Bids: ' . $bid_count . '" id="' . esc_attr($bid_count_ref) . '" disabled style="background-color: #212121;color: white;border-color: black;border-width: 0px;width: 125px;padding-left: 0px;padding-top: 0px;padding-right: 0px;padding-bottom: 0px;margin-bottom: 0px;height: 40px;">';
+            echo '<input type="text" value="Bid Increment: $' . esc_html($item->bid_increment) . '" id="' . esc_attr($next_increment_ref) . '" disabled style="background-color: #212121;color: white;border-color: black;border-width: 0px;width: 125px;padding-left: 0px;padding-top: 0px;padding-right: 0px;padding-bottom: 0px;margin-bottom: 0px;height: 20px;">';
+            echo '<input type="text" value="Total Bids: ' . $bid_count . '" id="' . esc_attr($bid_count_ref) . '" disabled style="background-color: #212121;color: white;border-color: black;border-width: 0px;width: 125px;padding-left: 0px;padding-top: 0px;padding-right: 0px;padding-bottom: 0px;margin-bottom: 0px;height: 20px;">';
           
             if (!$is_sold) {
                 echo '<p class="time-left" style="margin: 2px;">Time Left: <span class="timer" data-end-time="' . esc_attr($end_time) . '"></span></p>';
@@ -591,7 +591,7 @@ class Funky_Bidding_Shortcodes {
                 $user_info = isset($_COOKIE['funky_bidding_user_info']) ? json_decode(stripslashes($_COOKIE['funky_bidding_user_info']), true) : null;
                 echo '<div class="user-info-fields">';
                 echo '<div class="funky-bidding-form" style="background-color: #212121;">';
-                echo '<input type="text" name="user_name" id="user_name" placeholder="Name" value="' . esc_attr($user_info['user_name'] ?? '') . '" required>';
+                echo '<input type="text" style="margin-bottom:0px;height:22px;" name="user_name" id="user_name" placeholder="Name" value="' . esc_attr($user_info['user_name'] ?? '') . '" required>';
                 echo '</div>';
                 
                 echo '<div class="funky-bidding-form" style="background-color: #212121;">';
@@ -599,15 +599,15 @@ class Funky_Bidding_Shortcodes {
                 echo '</div>';
                 echo '</div>';
                 echo '<div class="funky-bidding-form" style="background-color: #212121;">';
-                echo '<label for="bid_amount" style="color: white;">Your Bid:</label>';
+                echo '<label for="bid_amount" style="color:white;margin-bottom:0px;">Your Bid:</label>';
                 echo '<div class="bid-input-container" style="background-color: #212121;">';
                 $suggested_bid = $highest_bid > 0 ? $highest_bid + $item->bid_increment : $item->min_bid;
                 if ($item->max_bid > 0 && $suggested_bid > $item->max_bid) {
                     $suggested_bid = $item->max_bid;
                 }
-                echo '<input type="number" name="bid_amount" id="bid_amount" step="5" min="' . esc_attr($suggested_bid) . '" value="' . esc_attr($suggested_bid) . '" required>';
+                echo '<input type="number" style="color:white;margin-bottom:0px;height:20px;" name="bid_amount" id="bid_amount" step="5" min="' . esc_attr($suggested_bid) . '" value="' . esc_attr($suggested_bid) . '" required>';
                 echo '</div>';
-                echo '<input type="text" name="suggested_bid_label" id="suggested_bid_label" value="Suggested Bid: $' . esc_attr($suggested_bid) . '" disabled style="border: none; background: none; font-weight: 400; width: 100%; font-family: -apple-system, system-ui, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif;font-size: 12px;height: 25px;padding-top: 0px;padding-bottom: 0px;padding-left: 0px;padding-right: 0px;">';
+                echo '<input type="text" name="suggested_bid_label" id="suggested_bid_label" value="Suggested Bid: $' . esc_attr($suggested_bid) . '" disabled style="border: none;background: none;font-weight: 400;width: 100%;font-family: -apple-system, system-ui, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif;font-size: 12px;height: 25px;padding-top: 0px;padding-bottom: 0px;padding-left: 0px;padding-right: 0px;margin-bottom: 0px;color: white;font-size: 12px;">';
                 echo '<button type="button" class="funky-bidding-button ' . $form_class . '">Place Bid</button>';
                 echo '<div id="bid-success-message" style="display:none;">Congratulations! Your bid has been placed successfully.</div>';
                 echo '</div>';
