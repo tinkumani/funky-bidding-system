@@ -50,14 +50,14 @@ class Funky_Bidding_Shortcodes {
                             // Handle new bids
                             if (data.new_bids.length > 0) {
                                 data.new_bids.forEach(function(bid) {
-                                    showNotification('New bid: $' + bid.bid_amount + ' on ' + bid.item_name);
+                                    showNotification('Someone just bid: $' + bid.bid_amount + ' on ' + bid.item_name);
                                 });
                             }
 
                             // Handle sold items
                             if (data.sold_items.length > 0) {
                                 data.sold_items.forEach(function(item) {
-                                    showNotification(item.name + ' sold for $' + item.sold_price + ' to ' + item.buyer);
+                                    showNotification("Someone just won: " + item.item_name + ' for $' + item.sold_price);
                                 });
                             }
                         }
@@ -82,7 +82,7 @@ class Funky_Bidding_Shortcodes {
                     .appendTo('body')
                     .animate({ right: '20px' }, 500)
                     .delay(3000)
-                    .fadeOut(1000, function() {
+                    .fadeOut(10000, function() {
                         $(this).remove();
                     });
             }
@@ -145,8 +145,19 @@ public function check_new_activity() {
         "SELECT i.*, b.bid_amount as sold_price, b.user_name as buyer
         FROM {$wpdb->prefix}bidding_items i
         JOIN {$wpdb->prefix}bidding_bids b ON i.id = b.item_id
-        WHERE i.status = 'sold' AND b.bid_time > %s
+        JOIN {$wpdb->prefix}bidding_campaigns c ON i.campaign_id = c.id
+        WHERE (
+            (i.max_bid > 0 AND b.bid_amount >= i.max_bid) 
+            OR (c.end_date <= %s)
+        )
+        AND b.bid_time > %s
+        AND b.bid_amount = (
+            SELECT MAX(bid_amount) 
+            FROM {$wpdb->prefix}bidding_bids 
+            WHERE item_id = i.id
+        )
         ORDER BY b.bid_time DESC",
+        current_time('mysql'),
         $last_check_time
     ));
 
