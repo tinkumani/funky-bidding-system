@@ -1,4 +1,5 @@
 <?php
+date_default_timezone_set('America/Chicago');
 class Funky_Bidding_Shortcodes {
     public function __construct() {
         add_shortcode('funky_bidding_campaigns', array($this, 'display_campaigns'));
@@ -32,7 +33,23 @@ class Funky_Bidding_Shortcodes {
         ?>
         <script>
         jQuery(document).ready(function($) {
-            var lastCheckTime = new Date().getTime();
+            function getCSTTimeMinusFiveMinutes() {
+                var now = new Date();
+                var cstOffset = -6; // CST is UTC-6
+                var utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+                var cstTime = new Date(utc + (3600000 * cstOffset));
+                cstTime.setMinutes(cstTime.getMinutes() - 5);
+                
+                var year = cstTime.getFullYear();
+                var month = ('0' + (cstTime.getMonth() + 1)).slice(-2);
+                var day = ('0' + cstTime.getDate()).slice(-2);
+                var hours = ('0' + cstTime.getHours()).slice(-2);
+                var minutes = ('0' + cstTime.getMinutes()).slice(-2);
+                var seconds = ('0' + cstTime.getSeconds()).slice(-2);
+                
+                return year + '-' + month + '-' + day + ' ' + hours + ':' + minutes + ':' + seconds;
+            }
+            var lastCheckTime = getCSTTimeMinusFiveMinutes();
             function checkNewActivity() {
                 $.ajax({
                     url: funkyBiddingActivityCheck.ajaxurl,
@@ -87,7 +104,7 @@ class Funky_Bidding_Shortcodes {
                     });
             }
 
-            setInterval(checkNewActivity, 5000);
+            setInterval(checkNewActivity, 1000);
         });
         </script>
         <?php
