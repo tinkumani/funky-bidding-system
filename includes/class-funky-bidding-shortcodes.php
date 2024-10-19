@@ -363,7 +363,8 @@ class Funky_Bidding_Shortcodes {
                 // Save user info to cookie
                 var newUserInfo = {
                     user_name: form.find("input[name=\'user_name\']").val(),
-                    user_phone: form.find("input[name=\'user_phone\']").val()
+                    user_phone: form.find("input[name=\'user_phone\']").val(),
+                    user_email: form.find("input[name=\'user_email\']").val()
                 };
                 document.cookie = "funky_bidding_user_info=" + JSON.stringify(newUserInfo) + "; path=/; max-age=31536000; SameSite=Strict";
 
@@ -597,6 +598,9 @@ class Funky_Bidding_Shortcodes {
                 echo '<div class="funky-bidding-form" style="background-color: #212121;">';
                 echo '<input type="tel" name="user_phone" id="user_phone" placeholder="Phone (Example: 1234567890)" value="' . esc_attr($user_info['user_phone'] ?? '') . '" pattern="[0-9]{10}" required>';
                 echo '</div>';
+                echo '<div class="funky-bidding-form" style="background-color: #212121;">';
+                echo '<input type="email" name="user_email" id="user_email" placeholder="Email" value="' . esc_attr($user_info['user_email'] ?? '') . '" required>';
+                echo '</div>';
                 echo '</div>';
                 echo '<div class="funky-bidding-form" style="background-color: #212121;">';
                 echo '<label for="bid_amount" style="color:white;margin-bottom:0px;">Your Bid:</label>';
@@ -645,6 +649,7 @@ class Funky_Bidding_Shortcodes {
             $item_id = intval($_POST['item_id']);
             $user_name = sanitize_text_field($_POST['user_name']);
             $user_phone = sanitize_text_field($_POST['user_phone']);
+            $user_email = sanitize_email($_POST['user_email']);
             $bid_amount = floatval($_POST['bid_amount']);
             $is_sold = $wpdb->get_var($wpdb->prepare(
                 "SELECT CASE 
@@ -666,7 +671,7 @@ class Funky_Bidding_Shortcodes {
             }
 
             // Log the input values
-            error_log("Input values: item_id=$item_id, user_name=$user_name, user_phone=$user_phone, bid_amount=$bid_amount");
+            error_log("Input values: item_id=$item_id, user_name=$user_name, user_phone=$user_phone,user_email=$user_email, bid_amount=$bid_amount");
 
             $item = $wpdb->get_row($wpdb->prepare("SELECT id, item_name, min_bid, bid_increment, max_bid FROM {$wpdb->prefix}bidding_items WHERE id = %d", $item_id));
             
@@ -695,6 +700,7 @@ class Funky_Bidding_Shortcodes {
                         'item_id' => $item_id,
                         'user_name' => $user_name,
                         'user_phone' => $user_phone,
+                        'user_email' => $user_email,
                         'bid_amount' => $bid_amount,
                         'bid_time' => current_time('mysql')
                     )
@@ -768,7 +774,7 @@ class Funky_Bidding_Shortcodes {
             $response['message'] = "Missing required information. Please fill in all fields.";
             // Log which POST variables are missing
             $missing = array();
-            foreach (['item_id', 'user_name', 'user_phone', 'bid_amount'] as $key) {
+            foreach (['item_id', 'user_name', 'user_phone','user_email', 'bid_amount'] as $key) {
                 if (!isset($_POST[$key])) {
                     $missing[] = $key;
                 }
@@ -791,6 +797,7 @@ class Funky_Bidding_Shortcodes {
                 'item_id' => $item_id,
                 'user_name' => $user_name,
                 'user_phone' => $user_phone,
+                'user_email' => $user_email,
                 'bid_amount' => $bid_amount,
                 'browser' => $browser,
                 'ip_address' => $ip_address,

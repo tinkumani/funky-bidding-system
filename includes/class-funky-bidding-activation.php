@@ -186,7 +186,12 @@ class Funky_Bidding_Activation {
         $tables = array(
             $wpdb->prefix . 'bidding_bids',
             $wpdb->prefix . 'bidding_items',
-            $wpdb->prefix . 'bidding_campaigns'
+            $wpdb->prefix . 'bidding_campaigns',
+            $wpdb->prefix . 'bidding_watchers',
+            $wpdb->prefix . 'bidding_users',
+            $wpdb->prefix . 'bidding_user_activity',
+            $wpdb->prefix . 'bidding_activity',
+            $wpdb->prefix . 'admin_campaign_activity'
         );
 
         foreach ($tables as $table) {
