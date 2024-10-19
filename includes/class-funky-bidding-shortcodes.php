@@ -16,6 +16,75 @@ class Funky_Bidding_Shortcodes {
         add_action('wp_ajax_nopriv_load_more_items', array($this, 'load_more_items'));
         add_action('wp_ajax_refresh_campaign_data', array($this, 'refresh_campaign_data'));
         add_action('wp_ajax_nopriv_refresh_campaign_data', array($this, 'refresh_campaign_data')); 
+        add_action('wp_ajax_check_new_activity', array($this, 'check_new_activity'));
+        add_action('wp_ajax_nopriv_check_new_activity', array($this, 'check_new_activity'));
+        add_action('wp_footer', array($this, 'add_activity_check_script'));
+    }
+
+    public function add_activity_check_script() {
+        wp_enqueue_script('funky-bidding-activity-check', plugin_dir_url(__FILE__) . '../assets/js/funky-bidding-activity-check.js', array('jquery'), '1.0', true);
+        wp_localize_script('funky-bidding-activity-check', 'funkyBiddingActivityCheck', array(
+            'ajaxurl' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('funky_bidding_activity_nonce')
+        ));
+
+        ?>
+        <script>
+        jQuery(document).ready(function($) {
+            var lastCheckTime = new Date().getTime();
+
+            function checkNewActivity() {
+                $.ajax({
+                    url: funkyBiddingActivityCheck.ajaxurl,
+                    type: 'POST',
+                    data: {
+                        action: 'check_new_activity',
+                        nonce: funkyBiddingActivityCheck.nonce,
+                        last_check_time: lastCheckTime
+                    },
+                    success: function(response) {
+                        if (response.success && response.data.length > 0) {
+                            response.data.forEach(function(item) {
+                                showActivityPopup(item);
+                            });
+                            lastCheckTime = new Date().getTime();
+                        }
+                    }
+                });
+            }
+
+            function showActivityPopup(item) {
+                var popup = $('<div class="funky-bidding-activity-popup">' +
+                    '<img src="' + item.image_url + '" alt="' + item.name + '">' +
+                    '<p>Item ID: ' + item.id + '</p>' +
+                    '<p>Name: ' + item.name + '</p>' +
+                    '<p>Status: ' + (item.sold ? 'Sold' : 'New Bid') + '</p>' +
+                    '</div>');
+
+                $('body').append(popup);
+
+                popup.css({
+                    'position': 'fixed',
+                    'right': '-300px',
+                    'top': '50%',
+                    'transform': 'translateY(-50%)',
+                    'width': '250px',
+                    'background-color': '#fff',
+                    'border': '1px solid #ccc',
+                    'padding': '10px',
+                    'box-shadow': '0 0 10px rgba(0,0,0,0.1)',
+                    'z-index': '9999'
+                }).animate({
+                    right: '20px'
+                }, 500).delay(3000).fadeOut(1000, function() {
+                    $(this).remove();
+                });
+            }
+
+            setInterval(checkNewActivity, 5000);
+        });
+        </script>
+        <?php
     }
 
     public function enqueue_assets() {
