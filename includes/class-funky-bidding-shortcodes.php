@@ -147,7 +147,7 @@ class Funky_Bidding_Shortcodes {
             
             if ($is_active) {
                 $view_items_url = esc_url(get_permalink() . '?campaign_id=' . $campaign->id);
-                echo '<a href="' . $view_items_url . '" class="funky-bidding-button" id="view-items-' . esc_attr($campaign->id) . '">View Items</a><br>&nbsp;';
+                echo '<a href="' . $view_items_url . '" class="view-items-button" id="view-items-' . esc_attr($campaign->id) . '">View Items</a><br>&nbsp;';
                 
                 static $first_active_campaign = true;
                 if ($first_active_campaign) {
