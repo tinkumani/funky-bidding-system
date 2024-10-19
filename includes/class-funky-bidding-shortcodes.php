@@ -599,7 +599,7 @@ class Funky_Bidding_Shortcodes {
                 echo '<input type="tel" name="user_phone" id="user_phone" placeholder="Phone (Example: 1234567890)" value="' . esc_attr($user_info['user_phone'] ?? '') . '" pattern="[0-9]{10}" required>';
                 echo '</div>';
                 echo '<div class="funky-bidding-form" style="background-color: #212121;">';
-                echo '<input type="email" name="user_email" id="user_email" placeholder="Email" value="' . esc_attr($user_info['user_email'] ?? '') . '" required>';
+                echo '<input type="email" style="height:16px;" name="user_email" id="user_email" placeholder="Email" value="' . esc_attr($user_info['user_email'] ?? '') . '" required>';
                 echo '</div>';
                 echo '</div>';
                 echo '<div class="funky-bidding-form" style="background-color: #212121;">';
