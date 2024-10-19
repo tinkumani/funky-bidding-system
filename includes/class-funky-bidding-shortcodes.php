@@ -89,13 +89,6 @@ class Funky_Bidding_Shortcodes {
 
             setInterval(checkNewActivity, 5000);
         });
-        jQuery(document).ready(function($) {
-            var lastCheckTime = '<?php echo current_time('mysql'); ?>';
-
-            
-
-            setInterval(checkNewActivity, 5000);
-        });
         </script>
         <?php
     }
@@ -139,7 +132,7 @@ public function check_new_activity() {
 
     // Get new bids
     $new_bids = $wpdb->get_results($wpdb->prepare(
-        "SELECT b.*, i.name as item_name 
+        "SELECT b.*, i.item_name 
         FROM {$wpdb->prefix}bidding_bids b
         JOIN {$wpdb->prefix}bidding_items i ON b.item_id = i.id
         WHERE b.bid_time > %s
