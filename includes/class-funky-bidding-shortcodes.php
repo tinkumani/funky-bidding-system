@@ -140,7 +140,7 @@ class Funky_Bidding_Shortcodes {
             echo '<div class="date-day">' . date('d', strtotime($campaign->end_date)) . '</div>';
             echo '<div class="date-month-year">';
             echo '<div>' . date('M Y', strtotime($campaign->end_date)) . '</div>';
-            echo '<div>' . date('h:i A T', strtotime($campaign->end_date)) . '</div>';
+            echo '<div>' . date('h:i A', strtotime($campaign->end_date)) . ' CDT</div>';
             echo '</div>';
             echo '</div>';
             echo '</div>';
@@ -755,7 +755,12 @@ class Funky_Bidding_Shortcodes {
                     $response['message'] = "Error placing bid. Please contact the treasurer (treasurer@stthomastexas.org) for assistance.";
                 }
             } else {
-                $response['message'] = "Invalid bid amount. Minimum bid is $" . number_format($min_next_bid, 2) . ".";
+                if($bid_amount >= $min_next_bid){
+                                        $response['message'] = "Invalid bid amount. Minimum bid is $" . number_format($min_next_bid, 2) . ".";
+                                   }
+                                    if($item->max_bid != 0 && $bid_amount >= $item->max_bid){
+                        $response['message'] = "Invalid bid amount. Maximum bid is $" . number_format($item->max_bid, 2) . ".";
+                }
                 // Log why the bid was not accepted
                 error_log("Bid not accepted. Bid amount: $bid_amount, Min next bid: $min_next_bid, Max bid: {$item->max_bid}");
             }
