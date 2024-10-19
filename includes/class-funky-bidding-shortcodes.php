@@ -522,11 +522,52 @@ public function check_new_activity() {
             $(document).on("click", ".funky-bidding-button", function(e) {
                 e.preventDefault();
                 var form = $(this).closest("form");
-                var userName = form.find("input[name=\'user_name\']").val();
-                var userEmail = form.find("input[name=\'user_email\']").val();
+                var userName = form.find("input[name=\'user_name\']").val().trim();
+                var userEmail = form.find("input[name=\'user_email\']").val().trim();
+                var userPhone = form.find("input[name=\'user_phone\']").val().trim();
+                var bidAmount = form.find("input[name=\'bid_amount\']").val().trim();
                 
-                if (!userName || !userEmail) {
-                    alert("Please enter your name and email before placing a bid.");
+                // Input verifications
+                function showError(message, $element) {
+                    var $errorPopup = $(\'<div class="error-popup">\')
+                        .text(message)
+                        .css({
+                            position: \'absolute\',
+                            background: \'#ffcccc\',
+                            border: \'1px solid #ff0000\',
+                            padding: \'5px\',
+                            borderRadius: \'3px\',
+                            zIndex: 1000
+                        });
+                    
+                    $element.after($errorPopup);
+                    $errorPopup.position({
+                        my: "left top",
+                        at: "left bottom+5",
+                        of: $element
+                    });
+                    
+                    setTimeout(function() {
+                        $errorPopup.fadeOut(function() {
+                            $(this).remove();
+                        });
+                    }, 3000);
+                }
+
+                if (!userName) {
+                    showError("Please enter your name.", form.find("input[name=\'user_name\']"));
+                    return;
+                }
+                if (!userEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userEmail)) {
+                    showError("Please enter a valid email address.", form.find("input[name=\'user_email\']"));
+                    return;
+                }
+                if (!userPhone || !/^\d{10}$/.test(userPhone)) {
+                    showError("Please enter a valid 10-digit phone number.", form.find("input[name=\'user_phone\']"));
+                    return;
+                }
+                if (!bidAmount || isNaN(bidAmount) || parseFloat(bidAmount) <= 0) {
+                    showError("Please enter a valid bid amount.", form.find("input[name=\'bid_amount\']"));
                     return;
                 }
                 
@@ -538,7 +579,7 @@ public function check_new_activity() {
                 // Save user info to cookie and update all forms
                 var newUserInfo = {
                     user_name: userName,
-                    user_phone: form.find("input[name=\'user_phone\']").val(),
+                    user_phone: userPhone,
                     user_email: userEmail
                 };
                 document.cookie = "funky_bidding_user_info=" + JSON.stringify(newUserInfo) + "; path=/; max-age=31536000; SameSite=Strict";
@@ -781,7 +822,7 @@ public function check_new_activity() {
                 echo '<input type="tel" name="user_phone" id="user_phone" placeholder="Phone (Example: 1234567890)" value="' . esc_attr($user_info['user_phone'] ?? '') . '" pattern="[0-9]{10}" required>';
                 echo '</div>';
                 echo '<div class="funky-bidding-form" style="background-color: #212121;">';
-                echo '<input type="email" style="height:16px;" name="user_email" id="user_email" placeholder="Email" value="' . esc_attr($user_info['user_email'] ?? '') . '" required>';
+                echo '<input type="email" style="height:16px;" name="user_email" id="user_email" placeholder="Email" value="' . esc_attr($user_info['user_email'] ?? '') . '" pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" required>';
                 echo '</div>';
                 echo '</div>';
                 echo '<div class="funky-bidding-form" style="background-color: #212121;">';
