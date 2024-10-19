@@ -570,6 +570,11 @@ public function check_new_activity() {
                     showError("Please enter a valid bid amount.", form.find("input[name=\'bid_amount\']"));
                     return;
                 }
+                 var suggestedBid = parseFloat(form.find("input[name=\'suggested_bid_label\']").val().split(\'$\')[1]);
+                if (parseFloat(bidAmount) < suggestedBid) {
+                    showError("Bid amount must be at least $" + suggestedBid.toFixed(2), form.find("input[name=\'bid_amount\']"));
+                    return;
+                }
                 
                 var formData = form.serialize();
                 var $button = $(this);
