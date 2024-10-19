@@ -84,23 +84,42 @@ class Funky_Bidding_Shortcodes {
 
             function showNotification(message) {
                 $('<div class="funky-bidding-notification">')
-                    .text(message)
+                    .html('<i class="fas fa-bell"></i> ' + message)
                     .css({
                         'position': 'fixed',
                         'bottom': '20px',
                         'right': '-300px',
-                        'width': '250px',
-                        'background-color': '#fff',
-                        'border': '1px solid #ccc',
-                        'padding': '10px',
-                        'box-shadow': '0 0 10px rgba(0,0,0,0.1)',
-                        'z-index': '9999'
+                        'width': '200px',
+                        'background-color': '#f69772',
+                        'color': '#fff',
+                        'border': '2px solid #f68458',
+                        'border-radius': '10px',
+                        'padding': '15px',
+                        'box-shadow': '0 0 15px rgba(249,104,104,0.7)',
+                        'z-index': '9999',
+                        'font-family': 'Arial, sans-serif',
+                        'font-size': '16px',
+                        'display': 'flex',
+                        'align-items': 'center'
                     })
                     .appendTo('body')
-                    .animate({ right: '20px' }, 500)
-                    .delay(3000)
-                    .fadeOut(10000, function() {
+                    .animate({ right: '20px', bottom: '+=10px' }, 600, 'swing')
+                    .delay(4000)
+                    .animate({ right: '-300px', bottom: '-=10px' }, 600, 'swing', function() {
                         $(this).remove();
+                    });
+
+                // Add bell ringing animation
+                $('<style>')
+                    .text('@keyframes ring { 0% { transform: rotate(-15deg); } 50% { transform: rotate(15deg); } 100% { transform: rotate(-15deg); } }')
+                    .appendTo('head');
+
+                $('.funky-bidding-notification i')
+                    .css({
+                        'font-size': '24px',
+                        'margin-right': '10px',
+                        'color': '#FFD700',
+                        'animation': 'ring 0.5s ease infinite'
                     });
             }
 
