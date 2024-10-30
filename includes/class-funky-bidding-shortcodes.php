@@ -879,6 +879,47 @@ public function check_new_activity() {
             $user_phone = sanitize_text_field($_POST['user_phone']);
             $user_email = sanitize_email($_POST['user_email']);
             $bid_amount = floatval($_POST['bid_amount']);
+            // Check if the user has ever logged in from the device
+            $device_id = md5($_SERVER['HTTP_USER_AGENT'] . $_SERVER['REMOTE_ADDR']);
+            $last_login = $wpdb->get_var($wpdb->prepare("SELECT time FROM {$wpdb->prefix}bidding_activity WHERE user_name = %s AND device_id = %s", $user_name, $device_id));
+
+            // If the user has never logged in from the device, prompt for a 4 digit code
+            if (!$last_login) {
+                $verification_code = mt_rand(1000, 9999);
+                $wpdb->insert($wpdb->prefix . 'bidding_activity', array('user_id' => wp_get_current_user()->ID, 'device_id' => $device_id, 'verification_code' => $verification_code), array('%d', '%s', '%d'));
+                wp_mail($user_email, 'Bidding System Verification Code', 'Your verification code is: ' . $verification_code);
+                ?>
+                <div id="verification-modal" style="display:none;">
+                    <p>Please enter the 4 digit code sent to your email:</p>
+                    <input type="text" id="verification-code" />
+                    <button id="verify-button">Verify</button>
+                </div>
+                <script>
+                    jQuery('#verify-button').click(function() {
+                        var code = jQuery('#verification-code').val();
+                        jQuery.ajax({
+                            type: 'POST',
+                            url: '<?php echo admin_url('admin-ajax.php'); ?>',
+                            data: {
+                                action: 'verify_code',
+                                code: code,
+                                device_id: '<?php echo $device_id; ?>',
+                                user_id: '<?php echo wp_get_current_user()->ID; ?>'
+                            },
+                            success: function(response) {
+                                if (response.success) {
+                                    jQuery('#verification-modal').hide();
+                                    // Proceed with the bid
+                                } else {
+                                    alert('Invalid code. Please try again.');
+                                }
+                            }
+                        });
+                    });
+                </script>
+                <?php
+                return;
+            }
             $is_sold = $wpdb->get_var($wpdb->prepare(
                 "SELECT CASE 
                     WHEN max_bid > 0 AND EXISTS (SELECT 1 FROM {$wpdb->prefix}bidding_bids WHERE item_id = %d AND bid_amount >= max_bid) THEN 1
@@ -1113,6 +1154,27 @@ public function check_new_activity() {
             )
         );
     }
+    public function verify_code() {
+        check_ajax_referer('funky_bidding_nonce', 'nonce');
+
+        if (isset($_POST['code'], $_POST['device_id'], $_POST['user_id'])) {
+            global $wpdb;
+            $code = intval($_POST['code']);
+            $device_id = sanitize_text_field($_POST['device_id']);
+            $user_id = intval($_POST['user_id']);
+
+            $verification_code = $wpdb->get_var($wpdb->prepare("SELECT max(verification_code) FROM {$wpdb->prefix}bidding_activity WHERE user_id = %d AND device_id = %s", $user_id, $device_id));
+
+            if ($code == $verification_code) {
+                wp_send_json_success('Code verified successfully.');
+            } else {
+                wp_send_json_error('Invalid code.');
+            }
+        } else {
+            wp_send_json_error('Invalid request.');
+        }
+    }
+
 
     public function handle_watch_item() {
         check_ajax_referer('funky_bidding_nonce', 'nonce');
@@ -1206,11 +1268,11 @@ function funky_bidding_inline_styles() {
     .funky-bidding-items {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
+        gap: 8px;
         justify-content: left;
         border-radius: 8px;
         padding: 1px;
-        background-color: #212121;
+        background-color: #d2caca;
     }
     .funky-bidding-item {
         background-color: #ffffff;
@@ -1221,6 +1283,7 @@ function funky_bidding_inline_styles() {
         width: 100%;
         border: 0px solid #ebebeb;
         box-shadow: none;
+        border-radius: 6px;
     }
     .funky-bidding-item:hover {
         transform: translateY(-5px);
