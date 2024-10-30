@@ -19,6 +19,8 @@ class Funky_Bidding_Shortcodes {
         add_action('wp_ajax_nopriv_refresh_campaign_data', array($this, 'refresh_campaign_data')); 
         add_action('wp_ajax_check_new_activity', array($this, 'check_new_activity'));
         add_action('wp_ajax_nopriv_check_new_activity', array($this, 'check_new_activity'));
+        add_action('wp_ajax_verify_code', array($this, 'verify_code'));
+        add_action('wp_ajax_nopriv_verify_code', array($this, 'verify_code'));
         add_action('wp_footer', array($this, 'add_activity_check_script'));
     }
 
@@ -881,45 +883,49 @@ public function check_new_activity() {
             $bid_amount = floatval($_POST['bid_amount']);
             // Check if the user has ever logged in from the device
             $device_id = md5($_SERVER['HTTP_USER_AGENT'] . $_SERVER['REMOTE_ADDR']);
-            $last_login = $wpdb->get_var($wpdb->prepare("SELECT time FROM {$wpdb->prefix}bidding_activity WHERE user_name = %s AND device_id = %s", $user_name, $device_id));
+            $last_login = $wpdb->get_var($wpdb->prepare("SELECT time FROM {$wpdb->prefix}bidding_activity WHERE user_email= %s AND device_id = %s and verification_code is null", $user_email, $device_id));
 
             // If the user has never logged in from the device, prompt for a 4 digit code
             if (!$last_login) {
                 $verification_code = mt_rand(1000, 9999);
-                $wpdb->insert($wpdb->prefix . 'bidding_activity', array('user_id' => wp_get_current_user()->ID, 'device_id' => $device_id, 'verification_code' => $verification_code), array('%d', '%s', '%d'));
-                wp_mail($user_email, 'Bidding System Verification Code', 'Your verification code is: ' . $verification_code);
-                ?>
-                <div id="verification-modal" style="display:none;">
-                    <p>Please enter the 4 digit code sent to your email:</p>
-                    <input type="text" id="verification-code" />
-                    <button id="verify-button">Verify</button>
-                </div>
-                <script>
-                    jQuery('#verify-button').click(function() {
-                        var code = jQuery('#verification-code').val();
-                        jQuery.ajax({
-                            type: 'POST',
-                            url: '<?php echo admin_url('admin-ajax.php'); ?>',
-                            data: {
-                                action: 'verify_code',
-                                code: code,
-                                device_id: '<?php echo $device_id; ?>',
-                                user_id: '<?php echo wp_get_current_user()->ID; ?>'
-                            },
-                            success: function(response) {
-                                if (response.success) {
-                                    jQuery('#verification-modal').hide();
-                                    // Proceed with the bid
-                                } else {
-                                    alert('Invalid code. Please try again.');
-                                }
-                            }
-                        });
-                    });
-                </script>
-                <?php
+                $this->log_bidding_activity($item_id, $user_name, $user_phone,$user_email, $bid_amount, $verification_code);
+
+                // Check if the verification code was already issued
+                $existing_code = $wpdb->get_var($wpdb->prepare("SELECT verification_code FROM {$wpdb->prefix}bidding_activity WHERE user_email = %s AND device_id = %s", $user_email, $device_id));
+                if (!$existing_code) {
+                    wp_mail($user_email, 'Bidding System Verification Code', 'Your verification code is: ' . $verification_code);
+                } else {
+                    $verification_code = $existing_code;
+                }
+                echo '<div id="verification-modal" style="display:none;">';
+                echo '<p>Please enter the 4 digit code sent to your email:</p>';
+                echo '<input type="text" id="verification-code" />';
+                echo '<button id="verify-button">Verify</button>';
+                echo '</div>';
+                echo '<script>';
+                echo 'document.getElementById("verify-button").addEventListener("click", function() {';
+                echo 'var code = document.getElementById("verification-code").value;';
+                echo 'fetch("' . admin_url('admin-ajax.php') . '", {';
+                echo 'method: "POST",';
+                echo 'headers: {';
+                echo '"Content-Type": "application/x-www-form-urlencoded"';
+                echo '},';
+                echo 'body: "action=verify_code&code=" + code + "&device_id=' . $device_id . '&user_id=' . wp_get_current_user()->ID;
+                echo '})';
+                echo '.then(response => response.json())';
+                echo '.then(data => {';
+                echo 'if (data.success) {';
+                echo 'document.getElementById("verification-modal").style.display = "none";';
+                echo '} else {';
+                echo 'alert("Invalid code. Please try again.");';
+                echo '}';
+                echo '})';
+                echo '.catch(error => console.error("Error:", error));';
+                echo '});';
+                echo '</script>';
                 return;
             }
+            $this->log_bidding_activity($item_id, $user_name, $user_phone,$user_email, $bid_amount, null);
             $is_sold = $wpdb->get_var($wpdb->prepare(
                 "SELECT CASE 
                     WHEN max_bid > 0 AND EXISTS (SELECT 1 FROM {$wpdb->prefix}bidding_bids WHERE item_id = %d AND bid_amount >= max_bid) THEN 1
@@ -1016,8 +1022,7 @@ public function check_new_activity() {
                 error_log("Database insertion result: " . ($result !== false ? "Success" : "Failure"));
 
                 if ($result !== false) {
-                    $this->log_bidding_activity($item_id, $user_name, $user_phone,$user_email, $bid_amount);
-
+                    
                     $is_won = $bid_amount >= $item->max_bid && $item->max_bid > 0;
                     
                    
@@ -1134,11 +1139,13 @@ public function check_new_activity() {
         wp_send_json($response);
     }
 
-    private function log_bidding_activity($item_id, $user_name, $user_phone,$user_email, $bid_amount) {
+    private function log_bidding_activity($item_id, $user_name, $user_phone,$user_email, $bid_amount,$verification_code) {
         global $wpdb;
         $browser = $_SERVER['HTTP_USER_AGENT'];
         $ip_address = $_SERVER['REMOTE_ADDR'];
         $time = current_time('mysql');
+        $device_id = md5($_SERVER['HTTP_USER_AGENT'] . $_SERVER['REMOTE_ADDR']);
+            
 
         $wpdb->insert(
             "{$wpdb->prefix}bidding_activity",
@@ -1150,7 +1157,11 @@ public function check_new_activity() {
                 'bid_amount' => $bid_amount,
                 'browser' => $browser,
                 'ip_address' => $ip_address,
-                'time' => $time
+                'time' => $time,
+                'device_id'=> $device_id,
+                'verification_code'=> $verification_code
+
+
             )
         );
     }
@@ -1166,6 +1177,13 @@ public function check_new_activity() {
             $verification_code = $wpdb->get_var($wpdb->prepare("SELECT max(verification_code) FROM {$wpdb->prefix}bidding_activity WHERE user_id = %d AND device_id = %s", $user_id, $device_id));
 
             if ($code == $verification_code) {
+                $wpdb->update(
+                    "{$wpdb->prefix}bidding_activity",
+                    array('verification_code' => null),
+                    array('user_id' => $user_id, 'device_id' => $device_id),
+                    array('%s', '%s'),
+                    array('%d', '%s')
+                );
                 wp_send_json_success('Code verified successfully.');
             } else {
                 wp_send_json_error('Invalid code.');

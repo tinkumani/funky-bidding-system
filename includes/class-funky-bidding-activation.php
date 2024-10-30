@@ -84,6 +84,7 @@ class Funky_Bidding_Activation {
             verification_code VARCHAR(100),
             browser VARCHAR(255) NOT NULL,
             ip_address VARCHAR(45) NOT NULL,
+            device_id VARCHAR(100) NOT NULL,
             time DATETIME NOT NULL,
             PRIMARY KEY (id),
             KEY item_id (item_id)
