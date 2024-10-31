@@ -658,8 +658,9 @@ public function check_new_activity() {
                                 $button.text("Sold");
                             }
                         } else {
-                         if(response.code = 202){
-                        var verificationCode = prompt("Please enter your 4 digit verification code:");
+                         alert(response.code);
+                         if(response.code == 204){
+                        var verificationCode = prompt(response.message);
                         if (verificationCode) {
                             $.ajax({
                                 url: "/wp-admin/admin-ajax.php",
@@ -706,6 +707,7 @@ public function check_new_activity() {
                                 }
                             });
                         }
+                            return;
                         }
                             var errorMessage = response.message || "An unknown error occurred";
                             alert("Error: " + errorMessage);
@@ -792,6 +794,7 @@ public function check_new_activity() {
                 echo '<div class="heart-piece-6"></div>';
                 echo '<div class="heart-piece-7"></div>';
                 echo '<div class="heart-piece-8"></div>';
+                echo '<div class="watch-item-image"></div>';
                 echo '</div>';
                 echo '</button>';
                 echo '<style>
@@ -839,6 +842,16 @@ public function check_new_activity() {
                     .heart-piece-6 { bottom: -4px; left: 4px; }
                     .heart-piece-7 { bottom: 4px; left: -4px; }
                     .heart-piece-8 { bottom: 4px; right: -4px; }
+                    .watch-item-image {
+                        width: 24px;
+                        height: 24px;
+                        background-image: url("assets/watch-item-image.png");
+                        background-size: cover;
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        z-index: 10;
+                    }
                     @keyframes heartBeat {
                         0% { transform: rotate(45deg) scale(1); }
                         14% { transform: rotate(45deg) scale(1.3); }
@@ -947,6 +960,12 @@ public function check_new_activity() {
                 wp_mail($user_email, 'Bidding System Verification Code', 'Your verification code is: ' . $verification_code);
                 $response['success'] = false;
                 $response['message'] = 'A email has been sent to your email.Please enter the 4 digit verification.';
+                $response['item_id'] = $item_id;
+                $response['user_name'] = $user_name;
+                $response['user_phone'] = $user_phone;
+                $response['user_email'] = $user_email;
+                $response['bid_amount'] = $bid_amount;
+                $response['verification_code'] = $verification_code;
                 $response['code'] = 204;
                 wp_send_json($response);
                 return;
@@ -1195,12 +1214,11 @@ public function check_new_activity() {
         error_log("Starting verify_code function.");
         check_ajax_referer('verify_code_nonce', 'nonce');
 
-        if (isset($_POST['code'], $_POST['device_id'], $_POST['user_email'])) {
+        if (isset($_POST['code'],$_POST['user_email'])) {
             error_log("All required POST variables are set.");
             global $wpdb;
             $code = intval($_POST['code']);
-            $device_id = sanitize_text_field($_POST['device_id']);
-            $user_id = intval($_POST['user_email']);
+            $user_email = intval($_POST['user_email']);
             $item_id = intval($_POST['item_id']);
             $user_name = sanitize_text_field($_POST['user_name']);
             $user_phone = sanitize_text_field($_POST['user_phone']);
