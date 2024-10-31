@@ -148,6 +148,7 @@ class Funky_Bidding_Shortcodes {
             'ajaxurl' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('funky_bidding_nonce')
         ));
+
     }
 
     public function create_bidding_users_table() {
@@ -392,6 +393,11 @@ public function check_new_activity() {
             'ajaxurl' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('funky_bidding_nonce')
         ));
+        wp_localize_script('jquery', 'verify_code', array(
+            'ajaxurl' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('verify_code_nonce')
+        ));
+
         ob_start();
         echo '<div id="funky-bidding-items-container" class="funky-bidding-items-container" data-campaign-id="' . esc_attr($campaign_id) . '">';
         echo '<div id="funky-bidding-items" class="funky-bidding-items"></div>';
@@ -652,6 +658,55 @@ public function check_new_activity() {
                                 $button.text("Sold");
                             }
                         } else {
+                         if(response.code = 202){
+                        var verificationCode = prompt("Please enter your 4 digit verification code:");
+                        if (verificationCode) {
+                            $.ajax({
+                                url: "/wp-admin/admin-ajax.php",
+                                type: "POST",
+                                data: {
+                                    action: "verify_code",
+                                    nonce: verify_code.nonce,
+                                    code: verificationCode,
+                                    user_email: response.user_email,
+                                    item_id: response.item_id,
+                                    user_name: response.user_name,
+                                    user_phone: response.user_phone,
+                                    user_email: response.user_email,
+                                    bid_amount: response.bid_amount
+
+                                },
+                                success: function(response) {
+                                    if (response.success) {
+                                        $.ajax({
+                                            url: "/wp-admin/admin-ajax.php",
+                                            type: "POST",
+                                            data: {
+                                                action: "place_bid",
+                                                item_id: response.item_id,
+                                                user_name: response.user_name,
+                                                user_phone: response.user_phone,
+                                                user_email: response.user_email,
+                                                bid_amount: response.bid_amount,
+                                                nonce: funkyBidding.nonce
+                                            },
+                                            success: function(response) {
+                                                alert("Bid placed successfully.");
+                                            },
+                                            error: function() {
+                                                alert("An error occurred while placing your bid. Please try again.");
+                                            }
+                                        });
+                                    } else {
+                                        alert("Invalid verification code. Please try again.");
+                                    }
+                                },
+                                error: function() {
+                                    alert("An error occurred. Please try again.");
+                                }
+                            });
+                        }
+                        }
                             var errorMessage = response.message || "An unknown error occurred";
                             alert("Error: " + errorMessage);
                         }
@@ -889,40 +944,11 @@ public function check_new_activity() {
             if (!$last_login) {
                 $verification_code = mt_rand(1000, 9999);
                 $this->log_bidding_activity($item_id, $user_name, $user_phone,$user_email, $bid_amount, $verification_code);
-
-                // Check if the verification code was already issued
-                $existing_code = $wpdb->get_var($wpdb->prepare("SELECT verification_code FROM {$wpdb->prefix}bidding_activity WHERE user_email = %s AND device_id = %s", $user_email, $device_id));
-                if (!$existing_code) {
-                    wp_mail($user_email, 'Bidding System Verification Code', 'Your verification code is: ' . $verification_code);
-                } else {
-                    $verification_code = $existing_code;
-                }
-                echo '<div id="verification-modal" style="display:none;">';
-                echo '<p>Please enter the 4 digit code sent to your email:</p>';
-                echo '<input type="text" id="verification-code" />';
-                echo '<button id="verify-button">Verify</button>';
-                echo '</div>';
-                echo '<script>';
-                echo 'document.getElementById("verify-button").addEventListener("click", function() {';
-                echo 'var code = document.getElementById("verification-code").value;';
-                echo 'fetch("' . admin_url('admin-ajax.php') . '", {';
-                echo 'method: "POST",';
-                echo 'headers: {';
-                echo '"Content-Type": "application/x-www-form-urlencoded"';
-                echo '},';
-                echo 'body: "action=verify_code&code=" + code + "&device_id=' . $device_id . '&user_id=' . wp_get_current_user()->ID;
-                echo '})';
-                echo '.then(response => response.json())';
-                echo '.then(data => {';
-                echo 'if (data.success) {';
-                echo 'document.getElementById("verification-modal").style.display = "none";';
-                echo '} else {';
-                echo 'alert("Invalid code. Please try again.");';
-                echo '}';
-                echo '})';
-                echo '.catch(error => console.error("Error:", error));';
-                echo '});';
-                echo '</script>';
+                wp_mail($user_email, 'Bidding System Verification Code', 'Your verification code is: ' . $verification_code);
+                $response['success'] = false;
+                $response['message'] = 'A email has been sent to your email.Please enter the 4 digit verification.';
+                $response['code'] = 204;
+                wp_send_json($response);
                 return;
             }
             $this->log_bidding_activity($item_id, $user_name, $user_phone,$user_email, $bid_amount, null);
@@ -1166,17 +1192,38 @@ public function check_new_activity() {
         );
     }
     public function verify_code() {
-        check_ajax_referer('funky_bidding_nonce', 'nonce');
+        error_log("Starting verify_code function.");
+        check_ajax_referer('verify_code_nonce', 'nonce');
 
-        if (isset($_POST['code'], $_POST['device_id'], $_POST['user_id'])) {
+        if (isset($_POST['code'], $_POST['device_id'], $_POST['user_email'])) {
+            error_log("All required POST variables are set.");
             global $wpdb;
             $code = intval($_POST['code']);
             $device_id = sanitize_text_field($_POST['device_id']);
-            $user_id = intval($_POST['user_id']);
+            $user_id = intval($_POST['user_email']);
+            $item_id = intval($_POST['item_id']);
+            $user_name = sanitize_text_field($_POST['user_name']);
+            $user_phone = sanitize_text_field($_POST['user_phone']);
+            $bid_amount = floatval($_POST['bid_amount']);
+            // Check if the user has ever logged in from the device
+            $device_id = md5($_SERVER['HTTP_USER_AGENT'] . $_SERVER['REMOTE_ADDR']);
+            error_log("Device ID generated: $device_id");
 
-            $verification_code = $wpdb->get_var($wpdb->prepare("SELECT max(verification_code) FROM {$wpdb->prefix}bidding_activity WHERE user_id = %d AND device_id = %s", $user_id, $device_id));
-
+            $verification_code = $wpdb->get_var($wpdb->prepare("SELECT max(verification_code) FROM {$wpdb->prefix}bidding_activity WHERE user_email = %d AND device_id = %s", $user_email, $device_id));
+            error_log("Verification code fetched: $verification_code");
+            $response = array(
+                'code' => $code,
+                'device_id' => $device_id,
+                'user_email' => $user_email,
+                'item_id' => $item_id,
+                'user_name' => $user_name,
+                'user_phone' => $user_phone,
+                'bid_amount' => $bid_amount,
+                'message'=>'Verified successfully'
+                
+            );
             if ($code == $verification_code) {
+                error_log("Code matches verification code.");
                 $wpdb->update(
                     "{$wpdb->prefix}bidding_activity",
                     array('verification_code' => null),
@@ -1184,11 +1231,15 @@ public function check_new_activity() {
                     array('%s', '%s'),
                     array('%d', '%s')
                 );
-                wp_send_json_success('Code verified successfully.');
+                error_log("Verification code updated to null.");
+                wp_send_json_success($response);
             } else {
-                wp_send_json_error('Invalid code.');
+                error_log("Code does not match verification code.");
+                $response['message']='Invalid code.';
+                wp_send_json_error($response);
             }
         } else {
+            error_log("Invalid request due to missing POST variables.");
             wp_send_json_error('Invalid request.');
         }
     }
