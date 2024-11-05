@@ -718,7 +718,7 @@ public function check_new_activity() {
             $next_increment_ref = "next_increment";
             $bid_count_ref = "bid_count";
 
-            echo '<div id="item-' . esc_attr($item_id) . '" class="funky-bidding-item' . ($is_sold ? ' sold' : '') . '" style="background-color: #212121;">';
+            echo '<div id="item-' . esc_attr($item_id) . '" class="funky-bidding-item' . ($is_sold ? ' sold' : '') . '" >';
             echo '<p class="funky-bidding-item-title" style="color: white; font-size: 18px; font-weight: bold;">';
             if (!empty($item->item_id)) {
                 echo '<span class="funky-bidding-item-id" style="background-color: #212121;">' . esc_html($item->item_id) . '.</span>';
@@ -1216,9 +1216,9 @@ function funky_bidding_inline_styles() {
         background-color: #212121;
     }
     .funky-bidding-item {
-        background-color: #ffffff;
-        border-radius: 0px;
-        padding: 0px;
+        background-color: #333;
+        border-radius: 10px;
+        padding: 10px;
         transition: transform 0.2s ease-in-out;
         position: relative;
         width: 100%;
