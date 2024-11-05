@@ -247,12 +247,15 @@ public function check_new_activity() {
             $end_time = strtotime($campaign->end_date);
             $is_active = time() < $end_time;
             $class = $is_active ? 'active' : 'inactive';
-            
             $total_money = $wpdb->get_var($wpdb->prepare(
-                "SELECT SUM(b.bid_amount) 
-                FROM {$wpdb->prefix}bidding_bids b
-                JOIN {$wpdb->prefix}bidding_items i ON b.item_id = i.id
-                WHERE i.campaign_id = %d",
+                "SELECT SUM(max_bid) 
+                FROM (
+                    SELECT i.id, MAX(b.bid_amount) AS max_bid
+                    FROM {$wpdb->prefix}bidding_bids b
+                    JOIN {$wpdb->prefix}bidding_items i ON b.item_id = i.id
+                    WHERE i.campaign_id = %d
+                    GROUP BY i.id
+                ) AS grouped_bids",
                 $campaign->id
             ));
             $items_sold = $wpdb->get_var($wpdb->prepare(
@@ -289,7 +292,7 @@ public function check_new_activity() {
             echo '<p class="funky-bidding-campaign-description">' . esc_html($campaign->description) . '</p>';
             echo '<div class="funky-bidding-campaign-stats">';
             echo '<div class="funky-bidding-stat"><span class="funky-bidding-stat-label">Total Raised:</span> <span class="funky-bidding-stat-value">$' . number_format($total_money, 2) . '</span></div>';
-            echo '<div class="funky-bidding-stat"><span class="funky-bidding-stat-label">Items Sold:</span> <span class="funky-bidding-stat-value">' . $items_sold . '</span></div>';
+            echo '<div class="funky-bidding-stat"><span class="funky-bidding-stat-label">Items Sold/Active Bids:</span> <span class="funky-bidding-stat-value">' . $items_sold . '</span></div>';
             echo '<div class="funky-bidding-stat"><span class="funky-bidding-stat-label">Items Remaining:</span> <span class="funky-bidding-stat-value">' . $items_to_be_sold . '</span></div>';
             echo '<div class="funky-bidding-stat"><span class="funky-bidding-stat-label">Time Remaining:</span> <span class="funky-bidding-stat-value"><span class="hourglass">⏳</span> <span class="time-remaining" data-end-time="' . esc_attr($end_time) . '"></span></span></div>';      
             echo '<div class="funky-bidding-stat">';
