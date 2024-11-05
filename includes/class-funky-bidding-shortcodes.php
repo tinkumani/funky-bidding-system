@@ -739,6 +739,7 @@ public function check_new_activity() {
                 echo '<div class="heart-piece-7"></div>';
                 echo '<div class="heart-piece-8"></div>';
                 echo '</div>';
+                echo '<div class="watch-item-text" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 10px;">Watch Item</div>';
                 echo '</button>';
                 echo '<style>
                     .heart {
