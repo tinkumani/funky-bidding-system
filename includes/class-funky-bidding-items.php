@@ -274,20 +274,24 @@ class Funky_Bidding_Items {
 
         $campaign_id = intval($_GET['campaign_id']);
         global $wpdb;
-
         $items = $wpdb->get_results($wpdb->prepare(
             "SELECT i.*, 
                     MAX(b.bid_amount) as current_price, 
-                    COUNT(b.id) as bid_count,
+                    (SELECT COUNT(DISTINCT b2.user_email) FROM {$wpdb->prefix}bidding_bids b2 WHERE b2.item_id = i.id) as bid_count,
                     MAX(b.bid_time) as last_bid_time,
                     b.user_email,
                     b.user_phone,
-                    b.user_name
+                    b.user_name,
+                    CASE 
+                        WHEN i.max_bid > 0 AND MAX(b.bid_amount) >= i.max_bid THEN 1 
+                        ELSE 0 
+                    END as is_winner
              FROM {$wpdb->prefix}bidding_items i
              LEFT JOIN {$wpdb->prefix}bidding_bids b ON i.id = b.item_id
              WHERE i.campaign_id = %d
-             GROUP BY i.id
-             ORDER BY current_price DESC",
+             GROUP BY i.id, b.user_email, b.user_phone, b.user_name,b.bid_amount
+             HAVING MAX(b.bid_amount) = b.bid_amount
+             ORDER BY is_winner DESC,current_price DESC",
             $campaign_id
         ));
 
@@ -300,27 +304,34 @@ class Funky_Bidding_Items {
         echo '<h2>Campaign Items</h2>';
         echo '<table class="wp-list-table widefat fixed striped">';
         echo '<thead><tr>';
+        echo '<th>#</th>';
         echo '<th>Image</th>';
         echo '<th>Item Name</th>';
+        echo '<th>Item Id</th>';
         echo '<th>Original Bid Price</th>';
         echo '<th>Maximum Bid Price</th>';
         echo '<th>Current Price</th>';
         echo '<th>Number of Bids</th>';
         echo '<th>Highest Bidder Email</th>';
         echo '<th>Highest Bidder Phone</th>';
+        echo '<th>Username</th>';
+        echo '<th>Won</th>';
         echo '<th>Last Bid Time</th>';
         echo '<th>Action</th>';
         echo '</tr></thead>';
         echo '<tbody>';
 
+        $sequence_number = 1;
         foreach ($items as $item) {
             echo '<tr>';
+            echo '<td>' . $sequence_number++ . '</td>'; 
             echo '<td>' . (
                 $item->item_image 
                 ? '<img src="' . esc_url($item->item_image) . '" alt="' . esc_attr($item->item_name) . '" style="max-width: 50px; max-height: 50px;">' 
                 : 'No image'
             ) . '</td>';
             echo '<td>' . esc_html($item->item_name) . '</td>';
+            echo '<td>' . esc_html($item->item_id) . '</td>';
             echo '<td>$' . number_format($item->min_bid, 2) . '</td>';
             echo '<td>$' . number_format($item->max_bid, 2) . '</td>';
             echo '<td>$' . number_format($item->current_price ? $item->current_price : $item->min_bid, 2) . '</td>';
@@ -328,6 +339,7 @@ class Funky_Bidding_Items {
             echo '<td>' . esc_html($item->user_email ? $item->user_email : 'N/A') . '</td>';
             echo '<td>' . esc_html($item->user_phone ? $item->user_phone : 'N/A') . '</td>';
             echo '<td>' . esc_html($item->user_name ? $item->user_name : 'N/A') . '</td>';
+            echo '<td>' . esc_html($item->is_winner ? $item->is_winner : 'N/A') . '</td>';
             echo '<td>' . ($item->last_bid_time ? date('Y-m-d H:i:s', strtotime($item->last_bid_time)) : 'No bids yet') . '</td>';
             echo '<td>';
             if ($item->user_name) {
