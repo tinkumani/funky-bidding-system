@@ -689,7 +689,7 @@ public function check_new_activity() {
             FROM {$wpdb->prefix}bidding_items i 
             JOIN {$wpdb->prefix}bidding_campaigns c ON i.campaign_id = c.id 
             WHERE i.campaign_id = %d
-            ORDER BY is_sold ASC, i.item_id ASC
+            ORDER BY is_sold ASC,inserted_time DESC,i.item_id ASC
             LIMIT %d OFFSET %d",
             $campaign_id,
             $items_per_page,
@@ -718,6 +718,9 @@ public function check_new_activity() {
             $next_increment_ref = "next_increment";
             $bid_count_ref = "bid_count";
 
+            $current_time = current_time('timestamp');
+            $is_new_item = (strtotime($item->inserted_time) > ($current_time - 86400)); // 86400 seconds in 24 hours
+
             echo '<div id="item-' . esc_attr($item_id) . '" class="funky-bidding-item' . ($is_sold ? ' sold' : '') . '" >';
             echo '<p class="funky-bidding-item-title" style="color: white; font-size: 18px; font-weight: bold;">';
             if (!empty($item->item_id)) {
@@ -726,6 +729,21 @@ public function check_new_activity() {
             echo esc_html($item->item_name);
             echo '</p>';
             echo '<div class="funky-bidding-item-image-container" style="background-color: #212121; position: relative;">';
+
+
+
+
+            if ($is_new_item) {
+                echo '<div class="new-item-animation" style="position: absolute; top: 10px; left: 10px; font-size: 10px; color: #ffcc00; animation: bounce 1s infinite; z-index: 10;">New Item!</div>';
+                echo '<style>
+                    @keyframes bounce {
+                        0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+                        40% { transform: translateY(-10px); }
+                        60% { transform: translateY(-5px); }
+                    }
+                </style>';
+            }
+
             if (!$is_sold) {
                 echo '<button class="watch-item" data-item-id="' . esc_attr($item_id) . '" style="position: absolute; top: 10px; right: 10px; background: none; border: none; cursor: pointer; z-index: 10;" title="Watch Item">';
                 echo '<div class="heart">';
