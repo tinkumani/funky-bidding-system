@@ -307,9 +307,9 @@ class Funky_Bidding_Items {
         echo '<th onclick="sortTable(1)" style="cursor: pointer; background-color: #f1f1f1; padding: 10px; text-align: left; border-bottom: 2px solid #ccc;">Image <span class="sort-arrow" onclick="toggleSort(1)">&#9650;&#9660;</span></th>';
         echo '<th onclick="sortTable(2)" style="cursor: pointer; background-color: #f1f1f1; padding: 10px; text-align: left; border-bottom: 2px solid #ccc;">Item Name <span class="sort-arrow" onclick="toggleSort(2)">&#9650;&#9660;</span></th>';
         echo '<th onclick="sortTable(3, true)" style="cursor: pointer; background-color: #f1f1f1; padding: 10px; text-align: left; border-bottom: 2px solid #ccc;">Item Id <span class="sort-arrow" onclick="toggleSort(3)">&#9650;&#9660;</span></th>';
-        echo '<th onclick="sortTable(4)" style="cursor: pointer; background-color: #f1f1f1; padding: 10px; text-align: left; border-bottom: 2px solid #ccc;">Original Bid Price <span class="sort-arrow" onclick="toggleSort(4)">&#9650;&#9660;</span></th>';
-        echo '<th onclick="sortTable(5)" style="cursor: pointer; background-color: #f1f1f1; padding: 10px; text-align: left; border-bottom: 2px solid #ccc;">Maximum Bid Price <span class="sort-arrow" onclick="toggleSort(5)">&#9650;&#9660;</span></th>';
-        echo '<th onclick="sortTable(6)" style="cursor: pointer; background-color: #f1f1f1; padding: 10px; text-align: left; border-bottom: 2px solid #ccc;">Current Price <span class="sort-arrow" onclick="toggleSort(6)">&#9650;&#9660;</span></th>';
+        echo '<th onclick="sortTable(4, true)" style="cursor: pointer; background-color: #f1f1f1; padding: 10px; text-align: left; border-bottom: 2px solid #ccc;">Original Bid Price <span class="sort-arrow" onclick="toggleSort(4)">&#9650;&#9660;</span></th>';
+        echo '<th onclick="sortTable(5, true)" style="cursor: pointer; background-color: #f1f1f1; padding: 10px; text-align: left; border-bottom: 2px solid #ccc;">Maximum Bid Price <span class="sort-arrow" onclick="toggleSort(5)">&#9650;&#9660;</span></th>';
+        echo '<th onclick="sortTable(6, true)" style="cursor: pointer; background-color: #f1f1f1; padding: 10px; text-align: left; border-bottom: 2px solid #ccc;">Current Price <span class="sort-arrow" onclick="toggleSort(6)">&#9650;&#9660;</span></th>';
         echo '<th onclick="sortTable(7)" style="cursor: pointer; background-color: #f1f1f1; padding: 10px; text-align: left; border-bottom: 2px solid #ccc;">Number of Bids <span class="sort-arrow" onclick="toggleSort(7)">&#9650;&#9660;</span></th>';
         echo '<th onclick="sortTable(8)" style="cursor: pointer; background-color: #f1f1f1; padding: 10px; text-align: left; border-bottom: 2px solid #ccc;">Highest Bidder Email <span class="sort-arrow" onclick="toggleSort(8)">&#9650;&#9660;</span></th>';
         echo '<th onclick="sortTable(9)" style="cursor: pointer; background-color: #f1f1f1; padding: 10px; text-align: left; border-bottom: 2px solid #ccc;">Highest Bidder Phone <span class="sort-arrow" onclick="toggleSort(9)">&#9650;&#9660;</span></th>';
@@ -337,8 +337,8 @@ class Funky_Bidding_Items {
                         shouldSwitch = false;
                         x = rows[i].getElementsByTagName("TD")[columnIndex];
                         y = rows[i + 1].getElementsByTagName("TD")[columnIndex];
-                        var xValue = isNumeric ? parseFloat(x.innerHTML) : x.innerHTML.toLowerCase();
-                        var yValue = isNumeric ? parseFloat(y.innerHTML) : y.innerHTML.toLowerCase();
+                        var xValue = isNumeric ? parseFloat(x.innerHTML.replace(/\\$/g, "")) : x.innerHTML.toLowerCase();
+                        var yValue = isNumeric ? parseFloat(y.innerHTML.replace(/\\$/g, "")) : y.innerHTML.toLowerCase();
                         if (dir == "asc") {
                             if (xValue > yValue) {
                                 shouldSwitch = true;
