@@ -301,24 +301,69 @@ class Funky_Bidding_Items {
 
         echo '<div class="wrap">';
         echo '<h2>Campaign Items</h2>';
-        echo '<table class="wp-list-table widefat fixed striped">';
+        echo '<table class="wp-list-table widefat fixed striped" id="campaign-items-table">';
         echo '<thead><tr>';
-        echo '<th>#</th>';
-        echo '<th>Image</th>';
-        echo '<th>Item Name</th>';
-        echo '<th>Item Id</th>';
-        echo '<th>Original Bid Price</th>';
-        echo '<th>Maximum Bid Price</th>';
-        echo '<th>Current Price</th>';
-        echo '<th>Number of Bids</th>';
-        echo '<th>Highest Bidder Email</th>';
-        echo '<th>Highest Bidder Phone</th>';
-        echo '<th>Username</th>';
-        echo '<th>Won</th>';
-        echo '<th>Last Bid Time</th>';
+        echo '<th onclick="sortTable(0)" style="cursor: pointer; background-color: #f1f1f1; padding: 10px; text-align: left; border-bottom: 2px solid #ccc;"># <span class="sort-arrow" onclick="toggleSort(0)">&#9650;&#9660;</span></th>';
+        echo '<th onclick="sortTable(1)" style="cursor: pointer; background-color: #f1f1f1; padding: 10px; text-align: left; border-bottom: 2px solid #ccc;">Image <span class="sort-arrow" onclick="toggleSort(1)">&#9650;&#9660;</span></th>';
+        echo '<th onclick="sortTable(2)" style="cursor: pointer; background-color: #f1f1f1; padding: 10px; text-align: left; border-bottom: 2px solid #ccc;">Item Name <span class="sort-arrow" onclick="toggleSort(2)">&#9650;&#9660;</span></th>';
+        echo '<th onclick="sortTable(3, true)" style="cursor: pointer; background-color: #f1f1f1; padding: 10px; text-align: left; border-bottom: 2px solid #ccc;">Item Id <span class="sort-arrow" onclick="toggleSort(3)">&#9650;&#9660;</span></th>';
+        echo '<th onclick="sortTable(4)" style="cursor: pointer; background-color: #f1f1f1; padding: 10px; text-align: left; border-bottom: 2px solid #ccc;">Original Bid Price <span class="sort-arrow" onclick="toggleSort(4)">&#9650;&#9660;</span></th>';
+        echo '<th onclick="sortTable(5)" style="cursor: pointer; background-color: #f1f1f1; padding: 10px; text-align: left; border-bottom: 2px solid #ccc;">Maximum Bid Price <span class="sort-arrow" onclick="toggleSort(5)">&#9650;&#9660;</span></th>';
+        echo '<th onclick="sortTable(6)" style="cursor: pointer; background-color: #f1f1f1; padding: 10px; text-align: left; border-bottom: 2px solid #ccc;">Current Price <span class="sort-arrow" onclick="toggleSort(6)">&#9650;&#9660;</span></th>';
+        echo '<th onclick="sortTable(7)" style="cursor: pointer; background-color: #f1f1f1; padding: 10px; text-align: left; border-bottom: 2px solid #ccc;">Number of Bids <span class="sort-arrow" onclick="toggleSort(7)">&#9650;&#9660;</span></th>';
+        echo '<th onclick="sortTable(8)" style="cursor: pointer; background-color: #f1f1f1; padding: 10px; text-align: left; border-bottom: 2px solid #ccc;">Highest Bidder Email <span class="sort-arrow" onclick="toggleSort(8)">&#9650;&#9660;</span></th>';
+        echo '<th onclick="sortTable(9)" style="cursor: pointer; background-color: #f1f1f1; padding: 10px; text-align: left; border-bottom: 2px solid #ccc;">Highest Bidder Phone <span class="sort-arrow" onclick="toggleSort(9)">&#9650;&#9660;</span></th>';
+        echo '<th onclick="sortTable(10)" style="cursor: pointer; background-color: #f1f1f1; padding: 10px; text-align: left; border-bottom: 2px solid #ccc;">Username <span class="sort-arrow" onclick="toggleSort(10)">&#9650;&#9660;</span></th>';
+        echo '<th onclick="sortTable(11)" style="cursor: pointer; background-color: #f1f1f1; padding: 10px; text-align: left; border-bottom: 2px solid #ccc;">Won <span class="sort-arrow" onclick="toggleSort(11)">&#9650;&#9660;</span></th>';
+        echo '<th onclick="sortTable(12)" style="cursor: pointer; background-color: #f1f1f1; padding: 10px; text-align: left; border-bottom: 2px solid #ccc;">Last Bid Time <span class="sort-arrow" onclick="toggleSort(12)">&#9650;&#9660;</span></th>';
         echo '<th>Action</th>';
         echo '</tr></thead>';
         echo '<tbody>';
+        echo '<script>
+            var sortDirections = Array(13).fill("asc");
+            function toggleSort(columnIndex) {
+                sortDirections[columnIndex] = sortDirections[columnIndex] === "asc" ? "desc" : "asc";
+                sortTable(columnIndex, false);
+            }
+            function sortTable(columnIndex, isNumeric = false) {
+                var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+                table = document.getElementById("campaign-items-table");
+                switching = true;
+                dir = sortDirections[columnIndex]; 
+                while (switching) {
+                    switching = false;
+                    rows = table.rows;
+                    for (i = 1; i < (rows.length - 1); i++) {
+                        shouldSwitch = false;
+                        x = rows[i].getElementsByTagName("TD")[columnIndex];
+                        y = rows[i + 1].getElementsByTagName("TD")[columnIndex];
+                        var xValue = isNumeric ? parseFloat(x.innerHTML) : x.innerHTML.toLowerCase();
+                        var yValue = isNumeric ? parseFloat(y.innerHTML) : y.innerHTML.toLowerCase();
+                        if (dir == "asc") {
+                            if (xValue > yValue) {
+                                shouldSwitch = true;
+                                break;
+                            }
+                        } else if (dir == "desc") {
+                            if (xValue < yValue) {
+                                shouldSwitch = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (shouldSwitch) {
+                        rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                        switching = true;
+                        switchcount++; 
+                    } else {
+                        if (switchcount == 0 && dir == "asc") {
+                            dir = "desc";
+                            switching = true;
+                        }
+                    }
+                }
+            }
+        </script>';
 
         $sequence_number = 1;
         foreach ($items as $item) {
