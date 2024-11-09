@@ -277,7 +277,6 @@ class Funky_Bidding_Items {
         $items = $wpdb->get_results($wpdb->prepare(
             "SELECT i.*, 
                     MAX(b.bid_amount) as current_price, 
-                    (SELECT COUNT(DISTINCT b2.user_email) FROM {$wpdb->prefix}bidding_bids b2 WHERE b2.item_id = i.id) as bid_count,
                     MAX(b.bid_time) as last_bid_time,
                     b.user_email,
                     b.user_phone,
@@ -287,11 +286,11 @@ class Funky_Bidding_Items {
                         ELSE 0 
                     END as is_winner
              FROM {$wpdb->prefix}bidding_items i
-             LEFT JOIN {$wpdb->prefix}bidding_bids b ON i.id = b.item_id
+             INNER JOIN {$wpdb->prefix}bidding_bids b ON i.id = b.item_id AND b.bid_amount = (SELECT MAX(bid_amount) FROM {$wpdb->prefix}bidding_bids WHERE item_id = i.id)
              WHERE i.campaign_id = %d
-             GROUP BY i.id, b.user_email, b.user_phone, b.user_name,b.bid_amount
-             HAVING MAX(b.bid_amount) = b.bid_amount
-             ORDER BY is_winner DESC,current_price DESC",
+             GROUP BY i.id
+             HAVING MAX(b.bid_amount) IS NOT NULL
+             ORDER BY i.item_id ASC",
             $campaign_id
         ));
 

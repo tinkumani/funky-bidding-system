@@ -734,7 +734,7 @@ public function check_new_activity() {
 
 
             if ($is_new_item) {
-                echo '<div class="new-item-animation" style="position: absolute; top: 10px; left: 10px; font-size: 10px; color: #ffcc00; animation: bounce 1s infinite; z-index: 10;">New Item!</div>';
+                echo '<div class="new-item-animation" style="position: absolute; top: 10px; left: 10px; font-size: 10px; color: #FF7F50; animation: bounce 1s infinite; z-index: 10;">Just Listed!</div>';
                 echo '<style>
                     @keyframes bounce {
                         0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
